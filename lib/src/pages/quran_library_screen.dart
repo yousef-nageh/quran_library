@@ -69,10 +69,6 @@ class QuranLibraryScreen extends StatelessWidget {
     @Deprecated(
         'In versions after 2.2.5 this parameter will be removed. Please use customMenuItems in AyahMenuStyle instead.')
     this.secondMenuChildOnTap,
-    this.ayahStyle,
-    this.surahStyle,
-    this.isShowAudioSlider = true,
-    this.appIconPathForPlayAudioInBackground,
     this.topBarStyle,
     this.indexTabStyle,
     this.searchTabStyle,
@@ -80,7 +76,6 @@ class QuranLibraryScreen extends StatelessWidget {
     this.ayahMenuStyle,
     this.snackBarStyle,
     this.tafsirStyle,
-    this.ayahDownloadManagerStyle,
     required this.parentContext,
     this.topBottomQuranStyle,
   });
@@ -289,22 +284,10 @@ class QuranLibraryScreen extends StatelessWidget {
   /// نمط تخصيص مظهر المشغل الصوتي للآيات - يتحكم في الألوان والخطوط والأيقونات [ayahStyle]
   ///
   /// [ayahStyle] Audio player style customization for ayahs - controls colors, fonts, and icons
-  final AyahAudioStyle? ayahStyle;
 
   /// نمط تخصيص مظهر المشغل الصوتي للسور - يتحكم في الألوان والخطوط والأيقونات [surahStyle]
   ///
   /// [surahStyle] Audio player style customization for surahs - controls colors, fonts, and icons
-  final SurahAudioStyle? surahStyle;
-
-  /// إظهار أو إخفاء سلايدر التحكم في الصوت السفلي [isShowAudioSlider]
-  ///
-  /// [isShowAudioSlider] Show or hide the bottom audio control slider
-  final bool? isShowAudioSlider;
-
-  /// مسار أيقونة التطبيق للمشغل الصوتي / App icon path for audio player
-  /// [appIconPathForPlayAudioInBackground] يمكن تمرير مسار مخصص لأيقونة التطبيق في المشغل الصوتي
-  /// [appIconPathForPlayAudioInBackground] You can pass a custom path for the app icon in the audio player
-  final String? appIconPathForPlayAudioInBackground;
 
   /// تخصيص نمط شريط الأعلى الخاص بالمصحف
   ///
@@ -362,8 +345,6 @@ class QuranLibraryScreen extends StatelessWidget {
   final TafsirStyle? tafsirStyle;
 
   // تخصيص نمط التنزيل الآيات
-  /// [ayahDownloadManagerStyle] Ayah download manager style customization
-  final AyahDownloadManagerStyle? ayahDownloadManagerStyle;
 
   // تخصيص نمط الجزء العلوي والسفلي للمصحف
   /// [topBottomQuranStyle] top/bottom style customization for the Quran
@@ -371,18 +352,6 @@ class QuranLibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // تحديث رابط أيقونة التطبيق إذا تم تمريره / Update app icon URL if provided
-    // Update app icon URL if provided
-    if (appIconPathForPlayAudioInBackground != null &&
-        appIconPathForPlayAudioInBackground!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          AudioCtrl.instance
-              .updateAppIconUrl(appIconPathForPlayAudioInBackground!);
-        }
-      });
-    }
-
     // if (isDark!) {
     //   QuranCtrl.instance.state.isTajweed.value = 1;
     //   GetStorage().write(StorageConstants().isTajweed, 1);
@@ -418,9 +387,6 @@ class QuranLibraryScreen extends StatelessWidget {
                 BookmarksTabStyle.defaults(isDark: isDark, context: context),
             topBottomQuranStyle: topBottomQuranStyle ??
                 TopBottomQuranStyle.defaults(isDark: isDark, context: context),
-            ayahDownloadManagerStyle: ayahDownloadManagerStyle ??
-                AyahDownloadManagerStyle.defaults(
-                    isDark: isDark, context: context),
             child: GetBuilder<QuranCtrl>(
               builder: (quranCtrl) {
                 // تهيئة خاملة لخطوط الصفحات المجاورة حول الصفحة الحالية بعد أول إطار
@@ -683,18 +649,7 @@ class QuranLibraryScreen extends StatelessWidget {
                                     children: [
                                       // السلايدر السفلي - يظهر من الأسفل للأعلى
                                       // Bottom slider - appears from bottom to top
-                                      isShowAudioSlider!
-                                          ? AyahsAudioWidget(
-                                              style: ayahStyle ??
-                                                  AyahAudioStyle.defaults(
-                                                      isDark: isDark,
-                                                      context: context),
-                                              isDark: isDark,
-                                              languageCode: languageCode,
-                                              downloadManagerStyle:
-                                                  ayahDownloadManagerStyle,
-                                            )
-                                          : const SizedBox.shrink(),
+
                                       kIsWeb
                                           ? JumpingPageControllerWidget(
                                               backgroundColor: backgroundColor,
@@ -709,8 +664,6 @@ class QuranLibraryScreen extends StatelessWidget {
                                           ? _QuranTopBar(
                                               languageCode,
                                               isDark,
-                                              style: surahStyle ??
-                                                  SurahAudioStyle(),
                                               backgroundColor: backgroundColor,
                                               downloadFontsDialogStyle:
                                                   downloadFontsDialogStyle,

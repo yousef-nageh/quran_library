@@ -451,14 +451,9 @@ extension QuranGetters on QuranCtrl {
 
   void showControlToggle({bool enableMultiSelect = false}) {
     if (!enableMultiSelect) {
-      if (AudioCtrl.instance.state.isPlaying.value) {
-        isShowControl.toggle();
-        update(['isShowControl']);
-      } else {
-        clearSelection();
-        isShowControl.toggle();
-        update(['isShowControl']);
-      }
+      clearSelection();
+      isShowControl.toggle();
+      update(['isShowControl']);
     }
   }
 }

@@ -37,10 +37,6 @@ class SurahDisplayScreen extends StatelessWidget {
     this.sajdaName,
     this.secondMenuChild,
     this.secondMenuChildOnTap,
-    this.ayahStyle,
-    this.surahStyle,
-    this.isShowAudioSlider = true,
-    this.appIconUrlForPlayAudioInBackground,
     required this.parentContext,
     this.indexTabStyle,
     this.searchTabStyle,
@@ -178,26 +174,6 @@ class SurahDisplayScreen extends StatelessWidget {
       'In versions after 2.2.5 this parameter will be removed. Please use customMenuItems in AyahMenuStyle instead.')
   final void Function(AyahModel ayah)? secondMenuChildOnTap;
 
-  /// نمط تخصيص مظهر المشغل الصوتي للآيات - يتحكم في الألوان والخطوط والأيقونات [ayahStyle]
-  ///
-  /// [ayahStyle] Audio player style customization for ayahs - controls colors, fonts, and icons
-  final AyahAudioStyle? ayahStyle;
-
-  /// نمط تخصيص مظهر المشغل الصوتي للسور - يتحكم في الألوان والخطوط والأيقونات [surahStyle]
-  ///
-  /// [surahStyle] Audio player style customization for surahs - controls colors, fonts, and icons
-  final SurahAudioStyle? surahStyle;
-
-  /// إظهار أو إخفاء سلايدر التحكم في الصوت السفلي [isShowAudioSlider]
-  ///
-  /// [isShowAudioSlider] Show or hide the bottom audio control slider
-  final bool? isShowAudioSlider;
-
-  /// رابط أيقونة التطبيق للمشغل الصوتي / App icon URL for audio player
-  /// [appIconUrlForPlayAudioInBackground] يمكن تمرير رابط مخصص لأيقونة التطبيق في المشغل الصوتي
-  /// [appIconUrlForPlayAudioInBackground] You can pass a custom URL for the app icon in the audio player
-  final String? appIconUrlForPlayAudioInBackground;
-
   /// السياق المطلوب من المستخدم لإدارة العمليات الداخلية للمكتبة [parentContext]
   /// مثل الوصول إلى MediaQuery، Theme، والتنقل بين الصفحات
   ///
@@ -245,18 +221,6 @@ class SurahDisplayScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AudioCtrl.instance;
-    // تحديث رابط أيقونة التطبيق إذا تم تمريره / Update app icon URL if provided
-    // Update app icon URL if provided
-    if (appIconUrlForPlayAudioInBackground != null &&
-        appIconUrlForPlayAudioInBackground!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          AudioCtrl.instance
-              .updateAppIconUrl(appIconUrlForPlayAudioInBackground!);
-        }
-      });
-    }
     final String deviceLocale = Localizations.localeOf(context).languageCode;
     final String languageCode = appLanguageCode ?? deviceLocale;
     // شرح: تهيئة الشاشة وإعداد المقاييس
@@ -284,8 +248,6 @@ class SurahDisplayScreen extends StatelessWidget {
             BookmarksTabStyle.defaults(isDark: isDark, context: parentContext),
         topBottomQuranStyle: TopBottomQuranStyle.defaults(
             isDark: isDark, context: parentContext),
-        ayahDownloadManagerStyle: AyahDownloadManagerStyle.defaults(
-            isDark: isDark, context: parentContext),
         child: GetBuilder<SurahCtrl>(
           init: SurahCtrl.instance,
           initState: (state) {
@@ -296,7 +258,6 @@ class SurahDisplayScreen extends StatelessWidget {
               final ctrl = state.controller!;
               // شرح: إعادة تحميل السورة إذا تغير رقمها
               // Explanation: Reload surah if its number changed
-              AudioCtrl.instance;
               if (ctrl.surahNumber != surahNumber) {
                 ctrl.loadSurah(surahNumber);
               }
@@ -355,17 +316,6 @@ class SurahDisplayScreen extends StatelessWidget {
 
                       // السلايدر السفلي - يظهر من الأسفل للأعلى
                       // Bottom slider - appears from bottom to top
-                      isShowAudioSlider!
-                          ? Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16.0),
-                              child: AyahsAudioWidget(
-                                style: ayahStyle ??
-                                    AyahAudioStyle.defaults(
-                                        isDark: isDark, context: context),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
                     ],
                   ),
                 )),

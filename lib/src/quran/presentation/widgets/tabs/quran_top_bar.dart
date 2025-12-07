@@ -3,7 +3,6 @@ part of '/quran.dart';
 class _QuranTopBar extends StatelessWidget {
   final String languageCode;
   final bool isDark;
-  final SurahAudioStyle? style;
   final bool? isFontsLocal;
   final DownloadFontsDialogStyle? downloadFontsDialogStyle;
   final Color? backgroundColor;
@@ -11,7 +10,7 @@ class _QuranTopBar extends StatelessWidget {
   const _QuranTopBar(
     this.languageCode,
     this.isDark, {
-    this.style,
+
     this.isFontsLocal,
     this.downloadFontsDialogStyle,
     this.backgroundColor,
@@ -79,34 +78,7 @@ class _QuranTopBar extends StatelessWidget {
             const Spacer(),
             Row(
               children: [
-                if (defaults.showAudioButton ?? true)
-                  IconButton(
-                    icon: SvgPicture.asset(
-                        defaults.audioIconPath ?? AssetsPath.assets.surahsAudio,
-                        height: defaults.iconSize,
-                        colorFilter: ColorFilter.mode(
-                            defaults.iconColor ??
-                                Theme.of(context).colorScheme.primary,
-                            BlendMode.srcIn)),
-                    onPressed: () async {
-                      await AudioCtrl.instance.state.audioPlayer.stop();
-                      // await AudioCtrl.instance.lastAudioSource();
-                      if (context.mounted) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SurahAudioScreen(
-                              isDark: isDark,
-                              style: style ??
-                                  SurahAudioStyle.defaults(
-                                      isDark: isDark, context: context),
-                              languageCode: languageCode,
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+
                 if (defaults.showFontsButton ?? true)
                   FontsDownloadDialog(
                     downloadFontsDialogStyle: downloadFontsDialogStyle ??

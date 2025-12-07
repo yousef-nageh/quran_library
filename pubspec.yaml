@@ -11,8 +11,6 @@ environment:
 
 dependencies:
   archive: ^4.0.7
-  audio_service: ^0.18.18
-  connectivity_plus: ^7.0.0
   dio: ^5.9.0
   flutter:
     sdk: flutter
@@ -22,9 +20,6 @@ dependencies:
   get: ^4.7.2
   get_storage: ^2.1.1
   html: ^0.15.6
-  just_audio: ^0.10.5
-  just_audio_media_kit: ^2.1.0
-  media_kit_libs_windows_audio: ^1.0.9
   path: ^1.9.1
   path_provider: ^2.1.5
   rxdart: ^0.28.0

@@ -1,4 +1,6 @@
-part of '/quran.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:quran_library/quran_library.dart';
 
 /// A dialog displayed on long click of an Ayah to provide options like bookmarking and copying text.
 ///
@@ -56,12 +58,8 @@ class AyahMenuDialog extends StatelessWidget {
         themed ?? AyahMenuStyle.defaults(isDark: isDark, context: context);
 
     // الحصول على نمط الصوت / Get audio style
-    final sAudio = AyahAudioStyle.defaults(isDark: isDark, context: context);
 
     // محاولة الحصول على نمط مدير التحميل من الثيم أولاً / Try to get download manager style from theme first
-    final themedDownloadManager = AyahDownloadManagerTheme.of(context)?.style;
-    final sDownloadManager = themedDownloadManager ??
-        AyahDownloadManagerStyle.defaults(isDark: isDark, context: context);
 
     final List<Widget> customMenuItems = s.customMenuItems ?? const [];
 
@@ -209,58 +207,6 @@ class AyahMenuDialog extends StatelessWidget {
               }
 
               // زر تشغيل جميع الآيات
-              if (s.showPlayButton ?? true) {
-                addDividerIfNeeded();
-                widgets.add(
-                  GestureDetector(
-                    onTap: () {
-                      AudioCtrl.instance.playAyah(
-                        context,
-                        ayah!.ayahUQNumber,
-                        playSingleAyah: true,
-                        ayahAudioStyle: sAudio,
-                        ayahDownloadManagerStyle: sDownloadManager,
-                        isDarkMode: isDark,
-                      );
-                      log('Second Menu Child Tapped: ${ayah!.ayahUQNumber}');
-                      QuranCtrl.instance.state.overlayEntry?.remove();
-                      QuranCtrl.instance.state.overlayEntry = null;
-                    },
-                    child: Icon(
-                      s.playIconData,
-                      color: s.playIconColor,
-                      size: s.iconSize,
-                    ),
-                  ),
-                );
-              }
-
-              // زر تشغيل جميع الآيات
-              if ((s.showPlayAllButton ?? true) && !kIsWeb) {
-                addDividerIfNeeded();
-                widgets.add(
-                  GestureDetector(
-                    onTap: () {
-                      AudioCtrl.instance.playAyah(
-                        context,
-                        ayah!.ayahUQNumber,
-                        playSingleAyah: false,
-                        ayahAudioStyle: sAudio,
-                        ayahDownloadManagerStyle: sDownloadManager,
-                        isDarkMode: isDark,
-                      );
-                      log('Second Menu Child Tapped: ${ayah!.ayahUQNumber}');
-                      QuranCtrl.instance.state.overlayEntry?.remove();
-                      QuranCtrl.instance.state.overlayEntry = null;
-                    },
-                    child: Icon(
-                      s.playAllIconData,
-                      color: s.playAllIconColor,
-                      size: s.iconSize,
-                    ),
-                  ),
-                );
-              }
 
               // زر التفسير
               if (s.showTafsirButton ?? true) {

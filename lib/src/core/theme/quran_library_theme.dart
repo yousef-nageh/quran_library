@@ -11,7 +11,6 @@ class QuranLibraryTheme extends StatelessWidget {
   final TafsirStyle tafsirStyle;
   final BookmarksTabStyle bookmarksTabStyle;
   final TopBottomQuranStyle topBottomQuranStyle;
-  final AyahDownloadManagerStyle ayahDownloadManagerStyle;
   final Widget child;
 
   const QuranLibraryTheme({
@@ -25,7 +24,6 @@ class QuranLibraryTheme extends StatelessWidget {
     required this.tafsirStyle,
     required this.bookmarksTabStyle,
     required this.topBottomQuranStyle,
-    required this.ayahDownloadManagerStyle,
     required this.child,
   });
 
@@ -50,10 +48,7 @@ class QuranLibraryTheme extends StatelessWidget {
                     style: topBottomQuranStyle,
                     child: QuranTopBarTheme(
                       style: topBarStyle,
-                      child: AyahDownloadManagerTheme(
-                        style: ayahDownloadManagerStyle,
-                        child: child,
-                      ),
+                      child: child,
                     ),
                   ),
                 ),
@@ -186,16 +181,3 @@ class TopBottomTheme extends InheritedWidget {
       style != oldWidget.style;
 }
 
-/// مزود نمط قسمَي الأعلى/الأسفل (Top/Bottom)
-class AyahDownloadManagerTheme extends InheritedWidget {
-  final AyahDownloadManagerStyle style;
-  const AyahDownloadManagerTheme(
-      {super.key, required this.style, required super.child});
-
-  static AyahDownloadManagerTheme? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AyahDownloadManagerTheme>();
-
-  @override
-  bool updateShouldNotify(covariant AyahDownloadManagerTheme oldWidget) =>
-      style != oldWidget.style;
-}

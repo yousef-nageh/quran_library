@@ -45,10 +45,6 @@ class QuranPagesScreen extends StatelessWidget {
     this.anotherMenuChildOnTap,
     this.secondMenuChild,
     this.secondMenuChildOnTap,
-    this.ayahStyle,
-    this.surahStyle,
-    this.isShowAudioSlider = true,
-    this.appIconUrlForPlayAudioInBackground,
     this.topBarStyle,
     // تحديد الصفحات
     this.page,
@@ -116,10 +112,7 @@ class QuranPagesScreen extends StatelessWidget {
   @Deprecated(
       'In versions after 2.2.5 this parameter will be removed. Please use customMenuItems in AyahMenuStyle instead.')
   final void Function(AyahModel ayah)? secondMenuChildOnTap;
-  final AyahAudioStyle? ayahStyle;
-  final SurahAudioStyle? surahStyle;
-  final bool? isShowAudioSlider;
-  final String? appIconUrlForPlayAudioInBackground;
+
   final QuranTopBarStyle? topBarStyle;
   final BuildContext parentContext;
 
@@ -177,17 +170,6 @@ class QuranPagesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // تحديث رابط أيقونة التطبيق إذا وُجد
-    if (appIconUrlForPlayAudioInBackground != null &&
-        appIconUrlForPlayAudioInBackground!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          AudioCtrl.instance
-              .updateAppIconUrl(appIconUrlForPlayAudioInBackground!);
-        }
-      });
-    }
-
     // إعداد وضع التحديد المتعدد والتظليل الخارجي (بدون Stateful)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!context.mounted) return;
@@ -274,8 +256,6 @@ class QuranPagesScreen extends StatelessWidget {
         bookmarksTabStyle:
             BookmarksTabStyle.defaults(isDark: isDark, context: parentContext),
         topBottomQuranStyle: TopBottomQuranStyle.defaults(
-            isDark: isDark, context: parentContext),
-        ayahDownloadManagerStyle: AyahDownloadManagerStyle.defaults(
             isDark: isDark, context: parentContext),
         child: GetBuilder<QuranCtrl>(
           builder: (quranCtrl) {
@@ -416,20 +396,12 @@ class QuranPagesScreen extends StatelessWidget {
                         builder: (quranCtrl) => Stack(
                           alignment: Alignment.center,
                           children: [
-                            isShowAudioSlider!
-                                ? AyahsAudioWidget(
-                                    style: ayahStyle ??
-                                        AyahAudioStyle.defaults(
-                                            isDark: isDark, context: context),
-                                  )
-                                : const SizedBox.shrink(),
                             appBar == null &&
                                     useDefaultAppBar &&
                                     quranCtrl.isShowControl.value
                                 ? _QuranTopBar(
                                     languageCode,
                                     isDark,
-                                    style: surahStyle ?? SurahAudioStyle(),
                                     backgroundColor: backgroundColor,
                                     downloadFontsDialogStyle:
                                         downloadFontsDialogStyle,

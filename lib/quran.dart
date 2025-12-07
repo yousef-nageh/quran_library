@@ -21,11 +21,11 @@ import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 import 'package:path_provider/path_provider.dart';
 
-import 'src/audio/audio.dart';
 import 'src/core/utils/app_colors.dart';
 import 'src/core/utils/ui_helper.dart';
 import 'src/core/widgets/header_dialog_widget.dart';
 import 'src/quran/core/helpers/responsive.dart';
+import 'src/quran/presentation/widgets/ayah_menu_dialog.dart';
 import 'src/tafsir/tafsir.dart';
 
 part 'src/core/theme/quran_library_theme.dart';
@@ -72,7 +72,6 @@ part 'src/quran/presentation/controllers/quran/quran_ctrl.dart';
 part 'src/quran/presentation/controllers/quran/quran_getters.dart';
 part 'src/quran/presentation/controllers/quran/quran_state.dart';
 part 'src/quran/presentation/controllers/surah/surah_ctrl.dart';
-part 'src/quran/presentation/widgets/ayah_menu_dialog.dart';
 part 'src/quran/presentation/widgets/bsmallah_widget.dart';
 part 'src/quran/presentation/widgets/default_fonts_page/default_first_two_surahs.dart';
 part 'src/quran/presentation/widgets/default_fonts_page/default_fonts.dart';

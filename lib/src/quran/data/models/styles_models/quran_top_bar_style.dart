@@ -40,7 +40,7 @@ class QuranTopBarStyle {
 
   // Visibility toggles
   final bool? showMenuButton;
-  final bool? showAudioButton;
+
   final bool? showFontsButton;
   final bool? showBackButton;
 
@@ -72,7 +72,6 @@ class QuranTopBarStyle {
     this.tabSurahsLabel,
     this.tabJozzLabel,
     this.showMenuButton,
-    this.showAudioButton,
     this.showFontsButton,
     this.optionsIconPath,
     this.customTopBarWidgets,
@@ -133,7 +132,7 @@ class QuranTopBarStyle {
         tabSurahsLabel: tabSurahsLabel ?? this.tabSurahsLabel,
         tabJozzLabel: tabJozzLabel ?? this.tabJozzLabel,
         showMenuButton: showMenuButton ?? this.showMenuButton,
-        showAudioButton: showAudioButton ?? this.showAudioButton,
+
         showFontsButton: showFontsButton ?? this.showFontsButton,
         showBackButton: showBackButton ?? this.showBackButton,
         optionsIconPath: optionsIconPath ?? this.optionsIconPath,
@@ -170,7 +169,7 @@ class QuranTopBarStyle {
       tabSurahsLabel: 'السور',
       tabJozzLabel: 'الأجزاء',
       showMenuButton: true,
-      showAudioButton: true,
+
       showFontsButton: true,
       showBackButton: false,
       optionsIconPath: AssetsPath.assets.options,
