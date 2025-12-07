@@ -20,9 +20,12 @@ class QuranRepository {
   ///
   /// Throws an [Exception] if the data retrieval fails.
   Future<List<dynamic>> getQuran() async {
-    String content = await rootBundle
-        .loadString('packages/quran_library/assets/jsons/quran_hafs.json');
-    return jsonDecode(content);
+    final byteData = await rootBundle
+        .load('packages/quran_library/assets/jsons/quran_hafs.json.gz');
+    final bytes = byteData.buffer.asUint8List();
+    final decompressed = gzip.decode(bytes);
+    final jsonString = utf8.decode(decompressed);
+    return jsonDecode(jsonString);
   }
 
   /// Fetches the list of Surahs from the data source.
@@ -38,9 +41,13 @@ class QuranRepository {
   /// Throws:
   ///   An exception if there is an error while fetching the Surah data.
   Future<Map<String, dynamic>> getSurahs() async {
-    String content = await rootBundle
-        .loadString('packages/quran_library/assets/jsons/surahs_name.json');
-    return jsonDecode(content);
+    // Load compressed surahs_name.json.gz file
+    final byteData = await rootBundle
+        .load('packages/quran_library/assets/jsons/surahs_name.json.gz');
+    final bytes = byteData.buffer.asUint8List();
+    final decompressed = gzip.decode(bytes);
+    final surahsJsonString = utf8.decode(decompressed);
+    return jsonDecode(surahsJsonString);
   }
 
   /// Fetches a list of Quran fonts.
@@ -55,11 +62,27 @@ class QuranRepository {
   /// List<dynamic> fonts = await getFontsQuran();
   /// ```
   Future<List<dynamic>> getQuranDataV3() async {
-    String jsonString = await rootBundle
-        .loadString('packages/quran_library/assets/jsons/quranV3.json');
-    Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
-    List<dynamic> surahsJson = jsonResponse['data']['surahs'];
-    return surahsJson;
+    // Load the compressed binary data
+
+    try {
+      final byteData = await rootBundle
+          .load('packages/quran_library/assets/jsons/quranV3.json.gz');
+      final bytes = byteData.buffer.asUint8List();
+
+      // Decompress
+      final decompressed = gzip.decode(bytes);
+
+      // Convert to string and parse JSON
+      final jsonString = utf8.decode(decompressed);
+      final Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
+
+      // Extract surahs
+      final List<dynamic> surahsJson = jsonResponse['data']['surahs'];
+      return surahsJson;
+    } catch (e) {
+      log("Error loading Quran data V3: $e");
+      return [];
+    }
   }
 
   /// Saves the last page number.

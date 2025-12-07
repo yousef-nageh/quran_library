@@ -73,10 +73,11 @@ flutter:
     - assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
     - assets/fonts/UthmanicHafs_V20.ttf
     - assets/jsons/
+    - assets/jsons/surahs_name.json.gz
     - assets/svg/
     - assets/images/
-    - assets/saadi.json
-    - assets/en.json
+    - assets/saadi.json.gz
+    - assets/en.json.gz
 
   fonts:
     - family: kufi
@@ -88,9 +89,7 @@ flutter:
     - family: hafs
       fonts:
         - asset: assets/fonts/UthmanicHafs_V20.ttf
-    - family: surahName
-      fonts:
-        - asset: assets/fonts/surah_name_naskh.ttf
+
     - family: cairo
       fonts:
         - asset: assets/fonts/Cairo-Bold.ttf

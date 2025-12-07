@@ -1,6 +1,6 @@
-import 'dart:convert' show json;
+import 'dart:convert' show json, utf8;
 import 'dart:developer' show log;
-import 'dart:io' show File, Directory;
+import 'dart:io' show File, Directory, gzip;
 
 import 'package:arabic_justified_text/arabic_justified_text.dart';
 import 'package:dio/dio.dart';
