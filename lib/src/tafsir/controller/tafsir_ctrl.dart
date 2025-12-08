@@ -194,7 +194,7 @@ class TafsirCtrl extends GetxController {
         if (selectedTafsir.fileName == _defaultDownloadedTafsirName) {
           // Load compressed saadi.json.gz file
           final byteData = await rootBundle.load(
-              'packages/quran_library/assets/$_defaultDownloadedTafsirName.json.gz');
+              'packages/quran_library/assets/jsons/$_defaultDownloadedTafsirName.json.gz');
           final bytes = byteData.buffer.asUint8List();
           final decompressed = gzip.decode(bytes);
           jsonString = utf8.decode(decompressed);
@@ -267,8 +267,8 @@ class TafsirCtrl extends GetxController {
       String jsonString;
       if (radioValue.value == translationsStartIndex) {
         // Load compressed en.json.gz file
-        final byteData =
-            await rootBundle.load('packages/quran_library/assets/en.json.gz');
+        final byteData = await rootBundle
+            .load('packages/quran_library/assets/jsons/en.json.gz');
         final bytes = byteData.buffer.asUint8List();
         final decompressed = gzip.decode(bytes);
         jsonString = utf8.decode(decompressed);

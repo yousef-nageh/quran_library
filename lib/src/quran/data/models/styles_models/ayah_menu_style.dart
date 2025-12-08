@@ -30,11 +30,9 @@ class AyahMenuStyle {
   /// لون أيقونة عرض التفسير.
   final Color? tafsirIconColor;
 
-  /// لون أيقونة تشغيل جميع الآيات.
-  final Color? playAllIconColor;
 
-  /// لون أيقونة تشغيل الآية.
-  final Color? playIconColor;
+
+
 
   /// لون فواصل الخطوط العمودية بين العناصر.
   final Color? dividerColor;
@@ -81,11 +79,8 @@ class AyahMenuStyle {
   /// إظهار/إخفاء زر التفسير.
   final bool? showTafsirButton;
 
-  /// إظهار/إخفاء زر التشغيل.
-  final bool? showPlayButton;
 
-  /// إظهار/إخفاء زر تشغيل جميع الآيات.
-  final bool? showPlayAllButton;
+
 
   /// الأيقونة المستخدمة لعنصر العلامة المرجعية.
   final IconData? bookmarkIconData;
@@ -96,11 +91,9 @@ class AyahMenuStyle {
   /// الأيقونة المستخدمة لزر التفسير.
   final IconData? tafsirIconData;
 
-  /// الأيقونة المستخدمة لزر تشغيل جميع الآيات.
-  final IconData? playAllIconData;
 
-  /// الأيقونة المستخدمة لزر تشغيل الآية.
-  final IconData? playIconData;
+
+
 
   /// مسافة الإزاحة من موضع النقر لحساب موضع الحوار عموديًا.
   final double? tapOffsetSpacing;
@@ -108,7 +101,7 @@ class AyahMenuStyle {
   /// هامش الأمان من حواف الشاشة عند تموضع الحوار.
   final double? edgeSafeMargin;
 
-  /// رسالة نجاح النسخ (مستحسن ربطها بـ i18n/intl).
+  /// رسالة نجاح النسخ (مستحسن ربطها بـ i18n/intl).f
   final String? copySuccessMessage;
 
   /// عناصر إضافية مخصّصة لعرضها ضمن قائمة الضغط المطوّل.
@@ -148,12 +141,8 @@ class AyahMenuStyle {
     this.edgeSafeMargin,
     this.copySuccessMessage,
     this.customMenuItems,
-    this.showPlayAllButton,
-    this.showPlayButton,
-    this.playIconData,
-    this.playAllIconData,
-    this.playIconColor,
-    this.playAllIconColor,
+
+
   });
 
   AyahMenuStyle copyWith({
@@ -187,12 +176,7 @@ class AyahMenuStyle {
     double? edgeSafeMargin,
     String? copySuccessMessage,
     List<Widget>? customMenuItems,
-    bool? showPlayAllButton,
-    bool? showPlayButton,
-    IconData? playIconData,
-    IconData? playAllIconData,
-    Color? playIconColor,
-    Color? playAllIconColor,
+
   }) {
     return AyahMenuStyle(
       backgroundColor: backgroundColor ?? this.backgroundColor,
@@ -226,12 +210,7 @@ class AyahMenuStyle {
       edgeSafeMargin: edgeSafeMargin ?? this.edgeSafeMargin,
       copySuccessMessage: copySuccessMessage ?? this.copySuccessMessage,
       customMenuItems: customMenuItems ?? this.customMenuItems,
-      showPlayAllButton: showPlayAllButton ?? this.showPlayAllButton,
-      showPlayButton: showPlayButton ?? this.showPlayButton,
-      playIconData: playIconData ?? this.playIconData,
-      playAllIconData: playAllIconData ?? this.playAllIconData,
-      playIconColor: playIconColor ?? this.playIconColor,
-      playAllIconColor: playAllIconColor ?? this.playAllIconColor,
+
     );
   }
 
@@ -284,12 +263,8 @@ class AyahMenuStyle {
       edgeSafeMargin: 10.0,
       copySuccessMessage: 'تم النسخ الى الحافظة',
       customMenuItems: null,
-      showPlayAllButton: true,
-      showPlayButton: true,
-      playIconData: Icons.play_arrow,
-      playAllIconData: Icons.playlist_play,
-      playIconColor: primary,
-      playAllIconColor: primary,
+
+
     );
   }
 }

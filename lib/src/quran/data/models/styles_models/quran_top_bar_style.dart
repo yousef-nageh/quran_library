@@ -101,7 +101,7 @@ class QuranTopBarStyle {
     String? tabSurahsLabel,
     String? tabJozzLabel,
     bool? showMenuButton,
-    bool? showAudioButton,
+
     bool? showFontsButton,
     bool? showBackButton,
     String? optionsIconPath,

@@ -76,8 +76,8 @@ flutter:
     - assets/jsons/surahs_name.json.gz
     - assets/svg/
     - assets/images/
-    - assets/saadi.json.gz
-    - assets/en.json.gz
+    - assets/jsons/saadi.json.gz
+    - assets/jsons/en.json.gz
 
   fonts:
     - family: kufi
