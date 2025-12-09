@@ -192,12 +192,9 @@ class TafsirCtrl extends GetxController {
       if (selectedTafsir.type == TafsirFileType.json) {
         String jsonString;
         if (selectedTafsir.fileName == _defaultDownloadedTafsirName) {
-          // Load compressed saadi.json.gz file
-          final byteData = await rootBundle.load(
-              'packages/quran_library/assets/jsons/$_defaultDownloadedTafsirName.json.gz');
-          final bytes = byteData.buffer.asUint8List();
-          final decompressed = gzip.decode(bytes);
-          jsonString = utf8.decode(decompressed);
+          // Load saadi.json from QuranDownloader
+          final dynamic jsonData = await QuranDownloader.loadJson('saadi.json');
+          jsonString = json.encode(jsonData);
         } else {
           if (kIsWeb) {
             final url =
@@ -266,12 +263,9 @@ class TafsirCtrl extends GetxController {
 
       String jsonString;
       if (radioValue.value == translationsStartIndex) {
-        // Load compressed en.json.gz file
-        final byteData = await rootBundle
-            .load('packages/quran_library/assets/jsons/en.json.gz');
-        final bytes = byteData.buffer.asUint8List();
-        final decompressed = gzip.decode(bytes);
-        jsonString = utf8.decode(decompressed);
+        // Load en.json from QuranDownloader
+        final dynamic jsonData = await QuranDownloader.loadJson('en.json');
+        jsonString = json.encode(jsonData);
       } else if (kIsWeb) {
         final url =
             'https://raw.githubusercontent.com/alheekmahlib/Islamic_database/refs/heads/main/quran_database/translate/$translationLangCode.json';

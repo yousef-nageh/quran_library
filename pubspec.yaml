@@ -15,7 +15,6 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_scale_kit: ^1.5.2
-  flutter_sliding_panel: ^0.0.5
   flutter_svg: ^2.2.3
   get: ^4.7.2
   get_storage: ^2.1.1
@@ -67,17 +66,13 @@ flutter:
       # ios:
       #   pluginClass: QuranLibraryPlugin
   assets:
-    - assets/
     - assets/fonts/
     - assets/fonts/Kufam-Regular.ttf
     - assets/fonts/NotoNaskhArabic-VariableFont_wght.ttf
     - assets/fonts/UthmanicHafs_V20.ttf
-    - assets/jsons/
-    - assets/jsons/surahs_name.json.gz
     - assets/svg/
     - assets/images/
-    - assets/jsons/saadi.json.gz
-    - assets/jsons/en.json.gz
+
 
   fonts:
     - family: kufi

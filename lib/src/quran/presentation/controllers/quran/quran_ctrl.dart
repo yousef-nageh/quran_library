@@ -95,26 +95,27 @@ class QuranCtrl extends GetxController {
   Future<void> loadQuranDataV3() async {
     lastPage = _quranRepository.getLastPage() ?? 1;
     state.currentPageNumber.value = lastPage;
+
+    if (state.surahs.isEmpty) {
+      // Load JSON data from repository
+      List<dynamic> surahsJson = await _quranRepository.getQuranDataV3();
+
+      // Process data in background using IsolateServiceV3
+      final result = await IsolateService.loadQuranV3InBackground(
+        surahsJson: surahsJson,
+        totalPages: 604,
+      );
+
+      // Update state with results from the isolate
+      state.surahs = result.surahs;
+      state.allAyahs.addAll(result.allAyahs);
+      state.pages.addAll(result.pages);
+      state.isQuranLoaded = true;
+    }
+
+    // Always jump to the last page, not just on first load
     if (lastPage != 0) {
       jumpToPage(lastPage - 1);
-    }
-    if (state.surahs.isEmpty) {
-      List<dynamic> surahsJson = await _quranRepository.getQuranDataV3();
-      state.surahs =
-          surahsJson.map((s) => SurahModel.fromDownloadedFontsJson(s)).toList();
-
-      for (final surah in state.surahs) {
-        state.allAyahs.addAll(surah.ayahs);
-        // log('Added ${surah.arabicName} ayahs');
-        // update();
-      }
-      List.generate(604, (pageIndex) {
-        state.pages.add(state.allAyahs
-            .where((ayah) => ayah.page == pageIndex + 1)
-            .toList());
-      });
-      state.isQuranLoaded = true;
-      // log('Pages Length: ${state.pages.length}', name: 'Quran Controller');
     }
   }
 
@@ -128,110 +129,70 @@ class QuranCtrl extends GetxController {
     return filteredAyahs;
   }
 
-  Future<void> loadQuranDataV1(
-      {int quranPages = QuranRepository.hafsPagesNumber}) async {
+  Future<void> loadQuranDataV1({
+    int quranPages = QuranRepository.hafsPagesNumber,
+  }) async {
+    if (ayahs.isNotEmpty) return;
+
     // حفظ آخر صفحة
     // lastPage = _quranRepository.getLastPage() ?? 1;
     // state.currentPageNumber.value = lastPage;
     // if (lastPage != 0) {
     //   jumpToPage(lastPage - 1);
     // }
+
     // إذا كانت الصفحات لم تُملأ أو العدد غير متطابق
     if (staticPages.isEmpty || quranPages != staticPages.length) {
-      // إنشاء صفحات فارغة
-      staticPages.value = List.generate(
-        quranPages,
-        (index) => QuranPageModel(pageNumber: index + 1, ayahs: [], lines: []),
-      );
+      // Load the JSON data from repository
       final quranJson = await _quranRepository.getQuran();
-      int hizb = 1;
-      int surahsIndex = 1;
-      List<AyahModel> thisSurahAyahs = [];
-      for (int i = 0; i < quranJson.length; i++) {
-        // تحويل كل json إلى AyahModel
-        final ayah = AyahModel.fromOriginalJson(quranJson[i]);
-        if (ayah.surahNumber != surahsIndex) {
-          surahs.last.endPage = ayahs.last.page;
-          surahs.last.ayahs = thisSurahAyahs;
-          surahsIndex = ayah.surahNumber!;
-          thisSurahAyahs = [];
-        }
-        ayahs.add(ayah);
-        thisSurahAyahs.add(ayah);
-        staticPages[ayah.page - 1].ayahs.add(ayah);
-        if (ayah.text.contains('۞')) {
-          staticPages[ayah.page - 1].hizb = hizb++;
-          quranStops.add(ayah.page);
-        }
-        if (ayah.text.contains('۩')) {
-          staticPages[ayah.page - 1].hasSajda = true;
-        }
-        if (ayah.ayahNumber == 1) {
-          ayah.text = ayah.text.replaceAll('۞', '');
-          staticPages[ayah.page - 1].numberOfNewSurahs++;
-          surahs.add(SurahModel(
-            surahNumber: ayah.surahNumber!,
-            englishName: ayah.englishName!,
-            arabicName: ayah.arabicName!,
-            ayahs: [],
-            isDownloadedFonts: false,
-          ));
-          surahsStart.add(ayah.page - 1);
-        }
-      }
-      surahs.last.endPage = ayahs.last.page;
-      surahs.last.ayahs = thisSurahAyahs;
-      // ملء الأسطر (lines) لكل صفحة
-      for (QuranPageModel staticPage in staticPages) {
-        List<AyahModel> ayas = [];
-        for (AyahModel aya in staticPage.ayahs) {
-          if (aya.ayahNumber == 1 && ayas.isNotEmpty) {
-            ayas.clear();
-          }
-          if (aya.text.contains('\n')) {
-            final lines = aya.text.split('\n');
-            for (int i = 0; i < lines.length; i++) {
-              bool centered = false;
-              if ((aya.centered ?? false) && i == lines.length - 2) {
-                centered = true;
-              }
-              final a = AyahModel.fromAya(
-                ayah: aya,
-                aya: lines[i],
-                ayaText: lines[i],
-                centered: centered,
-              );
-              ayas.add(a);
-              if (i < lines.length - 1) {
-                staticPage.lines.add(LineModel([...ayas]));
-                ayas.clear();
-              }
-            }
-          } else {
-            ayas.add(aya);
-          }
-        }
-        // إذا بقيت آيات في ayas بعد آخر سطر
-        if (ayas.isNotEmpty) {
-          staticPage.lines.add(LineModel([...ayas]));
-        }
-        ayas.clear();
-      }
+
+      // Process data in background using IsolateService
+      final result = await IsolateService.loadQuranInBackground(
+        quranJson: quranJson,
+        quranPages: quranPages,
+      );
+
+      // Update state with results from the isolate
+      staticPages.value = result.staticPages;
+
+      ayahs.clear();
+      ayahs.addAll(result.ayahs);
+
+      surahs.clear();
+      surahs.addAll(result.surahs);
+
+      surahsStart.clear();
+      surahsStart.addAll(result.surahsStart);
+
+      quranStops.clear();
+      quranStops.addAll(result.quranStops);
+
+      // Update UI
       update();
     }
   }
 
   Future<void> fetchSurahs() async {
+    if (surahsList.isNotEmpty) return;
     try {
       isLoading(true);
+
+      // Load JSON data from repository
       final jsonResponse = await _quranRepository.getSurahs();
-      final response = SurahResponseModel.fromJson(jsonResponse);
-      surahsList.assignAll(response.surahs);
+
+      // Process data in background using IsolateServiceFetchSurahs
+      final result = await IsolateService.fetchSurahsInBackground(
+        jsonResponse: jsonResponse,
+      );
+
+      // Update state with results from the isolate
+      surahsList.assignAll(result.surahs);
     } catch (e) {
       log('Error fetching data: $e');
     } finally {
       isLoading(false);
     }
+
     update();
   }
 

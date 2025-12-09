@@ -1,13 +1,12 @@
-import 'dart:convert' show json, utf8;
+import 'dart:convert' show json;
 import 'dart:developer' show log;
-import 'dart:io' show File, Directory, gzip;
+import 'dart:io' show File, Directory;
 
 import 'package:arabic_justified_text/arabic_justified_text.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_scale_kit/flutter_scale_kit.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_storage/get_storage.dart';

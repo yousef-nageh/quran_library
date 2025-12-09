@@ -81,7 +81,6 @@
   - [searching for any Ayah](#searching-for-any-ayah)
 - [Fonts Download](#fonts-download)
 - [Tafsir](#tafsir)
-- [Audio Playback](#audio-playback)
 - [Sources](#sources)
 - [License](#license)
 
@@ -89,40 +88,13 @@
 
 ## Getting started
 
-#### Android
-The required permissions for audio playback (`WAKE_LOCK`, and `FOREGROUND_SERVICE_MEDIA_PLAYBACK`) are automatically added by the package. You don't need to manually edit your AndroidManifest.xml.
+**No special configuration required!**
+This package assumes a "plug-and-play" philosophy. We've removed all complex audio configuration (and the audio retrieval feature itself), so you don't need to touch `AndroidManifest.xml` or `Info.plist` anymore.
 
-Additionally, to enable system-integrated audio controls (notification/lockscreen) using `audio_service`, your app's MainActivity must extend `AudioServiceActivity`:
+### Optimized Data Loading with Smart Initialization
+The heavy Quran JSON assets are now **compressed** and downloaded on-demand from our git server. This drastically reduces your app's initial download size.
 
-Kotlin:
-
-```kotlin
-import com.ryanheise.audioservice.AudioServiceActivity
-
-class MainActivity: AudioServiceActivity()
-```
-
-Java:
-
-```java
-import com.ryanheise.audioservice.AudioServiceActivity;
-
-public class MainActivity extends AudioServiceActivity {}
-```
-
-If you don't apply this change, the audio will still work locally, but `AudioService.init()` may fail and system controls won't be available.
-
-#### iOS
-For background audio playback, you must add the following to your app's `Info.plist`:
-
-```xml
-<key>UIBackgroundModes</key>
-<array>
-  <string>audio</string>
-</array>
-```
-
-This allows audio playback to continue when the app is in the background.
+**The library handles absolutely everything for you.** When you use the `QuranLibraryScreen`, it automatically checks for assets, downloads/decompresses them if needed, and loads the data into memory.
 
 In the `pubspec.yaml` of your flutter project, add the following dependency:
 
@@ -138,21 +110,40 @@ Import it:
 import 'package:quran_library/quran_library.dart';
 ```
 
-Initialize it:
+**That's it! Just run your app:**
 
 ```dart
 Future<void> main() async {
   await WidgetsFlutterBinding.ensureInitialized();
-  await QuranLibrary.init();
+  
   runApp(
     const MyApp(),
   );
 }
 ```
 
+### Optional: Pre-loading (Performance Optimization)
+If you prefer to load the data *before* the user opens the Quran screen (to avoid a loading spinner on the first open), you can (optionally) call the initialization methods in your `main()` function:
+
+```dart
+Future<void> main() async {
+  await WidgetsFlutterBinding.ensureInitialized();
+  
+  // Optional: Start downloading/decompressing assets immediately
+  await QuranLibrary.init();
+  
+  // Optional: Load data into memory immediately
+  await QuranLibrary.prepareQuranScreen();
+  
+  runApp(const MyApp());
+}
+```
+
 ## Usage Example
 
 ### Basic Quran Screen
+
+Just drop the widget into your code. It will handle the loading automatically!
 
 ```dart
 /// You can just add it to your code like this:
@@ -175,7 +166,7 @@ QuranLibraryScreen(
             parentContext: context,
             withPageView: true,
             useDefaultAppBar: true,
-            isShowAudioSlider: true,
+            // isShowAudioSlider: false, // REMOVED: Audio features are gone
             showAyahBookmarkedIcon: false,
             isDark: isDark,
             appLanguageCode: Get.locale!.languageCode,
@@ -205,7 +196,7 @@ QuranLibraryScreen(
             topBarStyle:
                 QuranTopBarStyle.defaults(isDark: isDark, context: context)
                     .copyWith(
-              showAudioButton: false,
+              // showAudioButton: false, // REMOVED
               showFontsButton: false,
               tabIndexLabel: 'index'.tr,
               tabBookmarksLabel: 'bookmarks'.tr,
@@ -642,189 +633,12 @@ QuranLibrary().tafsirDownload(int i);
 
 <img src="https://raw.githubusercontent.com/alheekmahlib/thegarlanded/master/Photos/Packages/quran_library/tafsir_screen.png" width="320"/>
 
-## Audio Playback
-
-### This section provides comprehensive capabilities for audio playback of the Holy Quran with background playback support and advanced audio file management.
-
-* ### Verse Audio Playback
-
-```dart
-/// Play a verse or group of verses starting from a specific verse
-await QuranLibrary().playAyah(
-  context: context,
-  currentAyahUniqueNumber: 1, // Unique ayah number
-  playSingleAyah: true, // true for single ayah, false to continue
-);
-
-/// Move to next verse and play it
-await QuranLibrary().seekNextAyah(
-  context: context,
-  currentAyahUniqueNumber: 5,
-);
-
-/// Move to previous verse and play it
-await QuranLibrary().seekPreviousAyah(
-  context: context,
-  currentAyahUniqueNumber: 10,
-);
-```
-
-* ### Surah Audio Playback
-
-```dart
-/// Play a complete surah from beginning to end
-await QuranLibrary().playSurah(surahNumber: 1); // Al-Fatihah
-await QuranLibrary().playSurah(surahNumber: 2); // Al-Baqarah
-
-/// Move to next surah and play it
-await QuranLibrary().seekToNextSurah();
-
-/// Move to previous surah and play it
-await QuranLibrary().seekToPreviousSurah();
-```
-
-<img src="https://raw.githubusercontent.com/alheekmahlib/thegarlanded/master/Photos/Packages/quran_library/play_surahs_screen.png" width="320"/>
-
-* ### Download Management
-
-```dart
-/// Start downloading a surah for offline playback
-await QuranLibrary().startDownloadSurah(surahNumber: 1);
-
-/// Cancel ongoing download
-QuranLibrary().cancelDownloadSurah();
-```
-
-* ### Position Control & Resume
-
-```dart
-/// Get current/last surah number
-int currentSurah = QuranLibrary().currentAndLastSurahNumber;
-
-/// Get last position as formatted text (like "05:23")
-String lastTimeText = QuranLibrary().formatLastPositionToTime;
-
-/// Get last position as Duration object for programming operations
-Duration lastDuration = QuranLibrary().formatLastPositionToDuration;
-
-/// Play from the last position where user stopped
-await QuranLibrary().playLastPosition();
-```
-
-* ### Complete Audio Example
-
-```dart
-class AudioControlExample extends StatefulWidget {
-  @override
-  _AudioControlExampleState createState() => _AudioControlExampleState();
-}
-
-class _AudioControlExampleState extends State<AudioControlExample> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Quran Audio Player')),
-      body: Column(
-        children: [
-          // Display current surah
-          Text('Current Surah: ${QuranLibrary().currentAndLastSurahNumber}'),
-          
-          // Display last position
-          Text('Last Position: ${QuranLibrary().formatLastPositionToTime}'),
-          
-          // Control buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Play from last position
-              ElevatedButton(
-                onPressed: () => QuranLibrary().playLastPosition(),
-                child: Text('Resume from where you left'),
-              ),
-              
-              // Play Al-Fatihah
-              ElevatedButton(
-                onPressed: () => QuranLibrary().playSurah(surahNumber: 1),
-                child: Text('Surah Al-Fatihah'),
-              ),
-            ],
-          ),
-          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Previous surah
-              IconButton(
-                onPressed: () => QuranLibrary().seekToPreviousSurah(),
-                icon: Icon(Icons.skip_previous),
-              ),
-              
-              // Previous ayah
-              IconButton(
-                onPressed: () => QuranLibrary().seekPreviousAyah(
-                  context: context,
-                  currentAyahUniqueNumber: 10,
-                ),
-                icon: Icon(Icons.fast_rewind),
-              ),
-              
-              // Next ayah
-              IconButton(
-                onPressed: () => QuranLibrary().seekNextAyah(
-                  context: context,
-                  currentAyahUniqueNumber: 5,
-                ),
-                icon: Icon(Icons.fast_forward),
-              ),
-              
-              // Next surah
-              IconButton(
-                onPressed: () => QuranLibrary().seekToNextSurah(),
-                icon: Icon(Icons.skip_next),
-              ),
-            ],
-          ),
-          
-          // Download buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () => QuranLibrary().startDownloadSurah(surahNumber: 2),
-                child: Text('Download Surah Al-Baqarah'),
-              ),
-              
-              ElevatedButton(
-                onPressed: () => QuranLibrary().cancelDownloadSurah(),
-                child: Text('Cancel Download'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-```
-
-* ### You can also use the default Quran font or Naskh font
-```dart
-/// [hafsStyle] is the default style for Quran so all special characters will be rendered correctly
-QuranLibrary().hafsStyle;
-
-/// [naskhStyle] is the default style for other text.
-QuranLibrary().naskhStyle;
-```
-
 ## Sources
 
-- Quran text and metadata: King Fahd Glorious Quran Printing Complex — Quran Developer Portal
-  - https://qurancomplex.gov.sa/quran-dev/
+[**King Fahd Complex**](https://qurancomplex.gov.sa/): The source of the Uthmanic text of the Qur’an for the "Hafs" narration.
 
-- Fonts, Tafsir, and Translations: Quranic Universal Library (QUL) by Tarteel
-  - https://qul.tarteel.ai/
+[**Tafsir Center**](https://tafsir.net/): The source of the Qur’an tafsir (explanation).
 
 ## License
-MIT for code. QCF fonts are provided via Quranic Universal Library (QUL). Ensure you comply with QUL terms (and any upstream KFGQPC terms) when distributing applications that include or bundle these assets.
 
-Read more about the license [here](LICENSE).
+[**MIT License**](LICENSE)

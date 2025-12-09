@@ -55,13 +55,6 @@ class QuranLibrary {
     }
 
     // Load data in parallel
-    final futures = <Future<void>>[
-      QuranCtrl.instance.loadQuranDataV1(),
-      QuranCtrl.instance.loadQuranDataV3(),
-      QuranCtrl.instance.fetchSurahs(),
-    ];
-
-    await Future.wait<void>(futures);
 
     // تسجيل الخطوط المحفوظة دفعة واحدة في الخلفية إن كانت متاحة
     // if (kIsWeb) {
@@ -85,6 +78,36 @@ class QuranLibrary {
 
     _isInitialized = true;
   }
+
+  /// [prepareQuranScreen] يجب استدعاؤها في كل مرة قبل فتح شاشة القرآن
+  /// لاستعادة آخر صفحة وإعداد الشاشة للعرض
+  ///
+  /// [prepareQuranScreen] should be called every time before opening the Quran screen
+  /// to restore the last page and prepare the screen for display
+  ///
+  /// Example usage:
+  /// ```dart
+  /// await QuranLibrary.prepareQuranScreen();
+  /// Navigator.push(context, MaterialPageRoute(builder: (_) => QuranScreen()));
+  /// ```
+  static Future<void> prepareQuranScreen() async {
+    // Ensure initialization has been done at least once
+    if (!_isInitialized) {
+      throw Exception(
+          'QuranLibrary not initialized. Call QuranLibrary.init() first in main().');
+    }
+
+    // Load Quran data (only runs first time, then cached in memory)
+    final futures = <Future<void>>[
+      QuranCtrl.instance.loadQuranDataV1(),
+      QuranCtrl.instance.loadQuranDataV3(),
+      QuranCtrl.instance.fetchSurahs(),
+    ];
+    await Future.wait<void>(futures);
+
+    // Restore last page position
+  }
+
 
   /// A singleton instance of the `QuranCtrl` class.
   ///
@@ -602,6 +625,7 @@ class QuranLibrary {
   /// التحقق إذا كان الوضع الحالي هو التفسير أو الترجمة.
   /// Check if the current mode is tafsir or translation.
   bool get isTafsir => TafsirCtrl.instance.selectedTafsir.isTafsir;
+
   bool get isTtranslation => TafsirCtrl.instance.selectedTafsir.isTranslation;
 
   /// التحقق إذا كان التفسير قيد التحميل حالياً.

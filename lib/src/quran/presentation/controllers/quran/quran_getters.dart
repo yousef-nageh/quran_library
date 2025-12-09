@@ -139,7 +139,13 @@ extension QuranGetters on QuranCtrl {
   ///
   /// Returns:
   ///   `List<AyahModel>`: A list of AyahModel representing the Ayahs on the specified page.
-  List<AyahModel> getPageAyahsByIndex(int pageIndex) => state.pages[pageIndex];
+  ///   Returns an empty list if the pageIndex is out of bounds.
+  List<AyahModel> getPageAyahsByIndex(int pageIndex) {
+    if (pageIndex < 0 || pageIndex >= state.pages.length) {
+      return [];
+    }
+    return state.pages[pageIndex];
+  }
 
   /// get page number by ayah unique number
 
@@ -259,8 +265,16 @@ extension QuranGetters on QuranCtrl {
   /// Returns:
   ///   `SurahModel`: The SurahModel representing the Surah containing
   ///   the Ayah with the given unique number.
-  SurahModel getSurahDataByAyahUQ(int ayah) => state.surahs
-      .firstWhere((s) => s.ayahs.any((a) => a.ayahUQNumber == ayah));
+  SurahModel getSurahDataByAyahUQ(int ayah) =>
+      state.surahs.firstWhere((s) => s.ayahs.any((a) => a.ayahUQNumber == ayah),
+          orElse: () => SurahModel(
+                surahNumber: 1,
+                arabicName: 'Unknown',
+                englishName: 'Unknown',
+                revelationType: 'Unknown',
+                ayahs: [],
+                isDownloadedFonts: false,
+              ));
 
   /// Retrieves the Juz data for a given page number.
   ///
@@ -385,7 +399,7 @@ extension QuranGetters on QuranCtrl {
   bool isThereAnySajdaInPage(
     int pageIndex,
   ) {
-    if (pageIndex > 0 || pageIndex < state.pages.length) {
+    if (pageIndex > 0 && pageIndex < state.pages.length) {
       return state.pages[pageIndex].any((ayah) {
         if (ayah.sajda != false) {
           if (ayah.sajda is Map) {

@@ -1,12 +1,8 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:quran_library/quran_library.dart';
 
 Future<void> main() async {
-  await WidgetsFlutterBinding.ensureInitialized();
-  await QuranLibrary.init();
   runApp(
     // DevicePreview(
     //   builder: (context) => const MyApp(),
@@ -57,7 +53,6 @@ class _MyAppState extends State<MyApp> {
         );
       },
       home: const Scaffold(
-        
         body: FullQuran(),
       ),
     );
@@ -124,10 +119,8 @@ class SingleSurah extends StatelessWidget {
       useDefaultAppBar: false,
       anotherMenuChild:
           const Icon(Icons.play_arrow_outlined, size: 28, color: Colors.grey),
-
       secondMenuChild:
           const Icon(Icons.playlist_play, size: 28, color: Colors.grey),
-
     );
   }
 }
@@ -166,7 +159,8 @@ class QuranPages extends StatelessWidget {
         // },
         // page: 6,
         startPage: 6,
-        endPage: 11, // النطاق شامل
+        endPage: 11,
+        // النطاق شامل
         // highlightedAyahNumbersInPages: [
         //   (
         //     start: 3,
@@ -177,13 +171,13 @@ class QuranPages extends StatelessWidget {
         highlightedRanges: const [
           (startSurah: 2, startAyah: 30, endSurah: 2, endAyah: 35)
         ],
-        withPageView: true, // تمكين/تعطيل السحب بين الصفحات
+        withPageView: true,
+        // تمكين/تعطيل السحب بين الصفحات
         anotherMenuChild:
             const Icon(Icons.play_arrow_outlined, size: 28, color: Colors.teal),
 
         secondMenuChild:
             const Icon(Icons.playlist_play, size: 28, color: Colors.teal),
-
       ),
     );
   }

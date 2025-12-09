@@ -157,81 +157,84 @@ class _MenuBottomSheet extends StatelessWidget {
     final Color accentColor =
         style.accentColor ?? Theme.of(context).colorScheme.primary;
 
-    return DefaultTabController(
-      length: 3,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: UiHelper.currentOrientation(
-              MediaQuery.of(context).size.height * 0.8,
-              MediaQuery.of(context).size.height * .9,
-              context),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // Drag handle + header
-              Container(
-                width: 44,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color:
-                      (style.handleColor ?? textColor.withValues(alpha: 0.25)),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TabBar(
-                  indicator: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(10),
+    return Directionality(
+      textDirection: languageCode =='ar'?  TextDirection.rtl : TextDirection.ltr,
+      child: DefaultTabController(
+        length: 3,
+        child: SafeArea(
+          top: false,
+          child: Container(
+            height: UiHelper.currentOrientation(
+                MediaQuery.of(context).size.height * 0.8,
+                MediaQuery.of(context).size.height * .9,
+                context),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Drag handle + header
+                Container(
+                  width: 44,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color:
+                        (style.handleColor ?? textColor.withValues(alpha: 0.25)),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  indicatorPadding: const EdgeInsets.all(4),
-                  padding: EdgeInsets.zero,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: textColor.withValues(alpha: 0.6),
-                  indicatorColor: accentColor,
-                  indicatorWeight: .5,
-                  labelStyle: QuranLibrary().cairoStyle.copyWith(
-                      fontSize: 15, fontWeight: FontWeight.w700, height: 1.3),
-                  unselectedLabelStyle:
-                      QuranLibrary().cairoStyle.copyWith(fontSize: 15),
-                  tabs: [
-                    Tab(text: style.tabIndexLabel ?? 'الفهرس'),
-                    Tab(text: style.tabSearchLabel ?? 'البحث'),
-                    Tab(text: style.tabBookmarksLabel ?? 'الفواصل'),
-                  ],
                 ),
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    _IndexTab(
-                      isDark: isDark,
-                      languageCode: languageCode,
-                      style: indexTabStyle,
+                const SizedBox(height: 8),
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    indicator: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    _SearchTab(
-                      isDark: isDark,
-                      languageCode: languageCode,
-                      style: searchTabStyle,
-                    ),
-                    _BookmarksTab(
-                      isDark: isDark,
-                      languageCode: languageCode,
-                      style: bookmarksTabStyle,
-                    ),
-                  ],
+                    indicatorPadding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.zero,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: textColor.withValues(alpha: 0.6),
+                    indicatorColor: accentColor,
+                    indicatorWeight: .5,
+                    labelStyle: QuranLibrary().cairoStyle.copyWith(
+                        fontSize: 15, fontWeight: FontWeight.w700, height: 1.3),
+                    unselectedLabelStyle:
+                        QuranLibrary().cairoStyle.copyWith(fontSize: 15),
+                    tabs: [
+                      Tab(text: style.tabIndexLabel ?? 'الفهرس'),
+                      Tab(text: style.tabSearchLabel ?? 'البحث'),
+                      Tab(text: style.tabBookmarksLabel ?? 'الفواصل'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _IndexTab(
+                        isDark: isDark,
+                        languageCode: languageCode,
+                        style: indexTabStyle,
+                      ),
+                      _SearchTab(
+                        isDark: isDark,
+                        languageCode: languageCode,
+                        style: searchTabStyle,
+                      ),
+                      _BookmarksTab(
+                        isDark: isDark,
+                        languageCode: languageCode,
+                        style: bookmarksTabStyle,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

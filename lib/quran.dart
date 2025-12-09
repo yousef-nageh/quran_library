@@ -1,7 +1,7 @@
 import 'dart:async' show Completer, Timer;
-import 'dart:convert' show jsonDecode, jsonEncode , utf8;
+import 'dart:convert' show jsonDecode, jsonEncode ;
 import 'dart:developer' show log;
-import 'dart:io' show File, Platform, Directory ,gzip;
+import 'dart:io' show File, Platform, Directory ;
 import 'dart:isolate';
 import 'dart:math' as math show max;
 
@@ -20,12 +20,14 @@ import 'package:get_storage/get_storage.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
 import 'package:path_provider/path_provider.dart';
+import 'package:quran_library/src/services/isolate_service.dart';
 
 import 'src/core/utils/app_colors.dart';
 import 'src/core/utils/ui_helper.dart';
 import 'src/core/widgets/header_dialog_widget.dart';
 import 'src/quran/core/helpers/responsive.dart';
 import 'src/quran/presentation/widgets/ayah_menu_dialog.dart';
+import 'src/services/quran_downloader.dart';
 import 'src/tafsir/tafsir.dart';
 
 part 'src/core/theme/quran_library_theme.dart';
@@ -34,6 +36,7 @@ part 'src/core/utils/toast_utils.dart';
 part 'src/flutter_quran_utils.dart';
 part 'src/pages/get_single_ayah.dart';
 part 'src/pages/quran_library_screen.dart';
+part 'src/pages/quran_library_screen_future.dart';
 part 'src/pages/quran_pages_screen.dart';
 part 'src/pages/surah_display_screen.dart';
 part 'src/quran/core/extensions/context_extensions.dart';

@@ -20,12 +20,8 @@ class QuranRepository {
   ///
   /// Throws an [Exception] if the data retrieval fails.
   Future<List<dynamic>> getQuran() async {
-    final byteData = await rootBundle
-        .load('packages/quran_library/assets/jsons/quran_hafs.json.gz');
-    final bytes = byteData.buffer.asUint8List();
-    final decompressed = gzip.decode(bytes);
-    final jsonString = utf8.decode(decompressed);
-    return jsonDecode(jsonString);
+    final dynamic data = await QuranDownloader.loadJson('quran_hafs.json');
+    return data as List<dynamic>;
   }
 
   /// Fetches the list of Surahs from the data source.
@@ -41,13 +37,9 @@ class QuranRepository {
   /// Throws:
   ///   An exception if there is an error while fetching the Surah data.
   Future<Map<String, dynamic>> getSurahs() async {
-    // Load compressed surahs_name.json.gz file
-    final byteData = await rootBundle
-        .load('packages/quran_library/assets/jsons/surahs_name.json.gz');
-    final bytes = byteData.buffer.asUint8List();
-    final decompressed = gzip.decode(bytes);
-    final surahsJsonString = utf8.decode(decompressed);
-    return jsonDecode(surahsJsonString);
+    // Load surahs data from QuranDownloader
+    final dynamic data = await QuranDownloader.loadJson('surahs_name.json');
+    return data as Map<String, dynamic>;
   }
 
   /// Fetches a list of Quran fonts.
@@ -59,26 +51,35 @@ class QuranRepository {
   ///
   /// Example usage:
   /// ```dart
-  /// List<dynamic> fonts = await getFontsQuran();
+  /// List<dynamic> fonts = await getQuranDataV3();
   /// ```
   Future<List<dynamic>> getQuranDataV3() async {
-    // Load the compressed binary data
-
     try {
-      final byteData = await rootBundle
-          .load('packages/quran_library/assets/jsons/quranV3.json.gz');
-      final bytes = byteData.buffer.asUint8List();
+      // Load Quran V3 data from QuranDownloader
+      final dynamic jsonData = await QuranDownloader.loadJson('quranV3.json');
 
-      // Decompress
-      final decompressed = gzip.decode(bytes);
+      // Check if it's a List
+      if (jsonData is List && jsonData.isNotEmpty && jsonData[0] is Map) {
+        final firstItem = jsonData[0] as Map<String, dynamic>;
+        if (firstItem.containsKey('data')) {
+          final data = firstItem['data'] as Map<String, dynamic>;
+          return data['surahs'] as List<dynamic>;
+        }
+      }
 
-      // Convert to string and parse JSON
-      final jsonString = utf8.decode(decompressed);
-      final Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
+      // Check if it's a Map with data.surahs structure
+      if (jsonData is Map<String, dynamic> && jsonData.containsKey('data')) {
+        final data = jsonData['data'] as Map<String, dynamic>;
+        return data['surahs'] as List<dynamic>;
+      }
 
-      // Extract surahs
-      final List<dynamic> surahsJson = jsonResponse['data']['surahs'];
-      return surahsJson;
+      // If it's already a list, return as is
+      if (jsonData is List) {
+        return jsonData;
+      }
+
+      // Fallback
+      return [];
     } catch (e) {
       log("Error loading Quran data V3: $e");
       return [];
