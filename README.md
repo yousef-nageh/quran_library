@@ -129,10 +129,11 @@ If you prefer to load the data *before* the user opens the Quran screen (to avoi
 Future<void> main() async {
   await WidgetsFlutterBinding.ensureInitialized();
   
-  // Optional: Start downloading/decompressing assets immediately
+  // Optional: Start  set local storage path and download fonts
   await QuranLibrary.init();
-  
-  // Optional: Load data into memory immediately
+  // Optional: download all quran json 
+  await QuranDownloader.ensureInitialized();
+  // Optional: Load data into memory immediately using isolate for better performance
   await QuranLibrary.prepareQuranScreen();
   
   runApp(const MyApp());
