@@ -85,10 +85,21 @@ for f in $(git diff --name-only --diff-filter=U -- lib/src/services); do
   git checkout --ours -- "$f" && git add "$f" && echo "  ✔ ours   $f"
 done
 
-# ── 4. audio packages out of pubspec.yaml (only when it has no conflict) ─────
+# ── 4. pubspec.yaml = upstream's version minus what this fork removes ──────
+strip_pubspec() {
+  sed -i -E \
+    -e '/^  (audio_service|just_audio|just_audio_[a-z_]+|record|sherpa_onnx|sherpa_onnx_[a-z0-9_]+):/d' \
+    -e '/^    - assets\/$/d' \
+    -e '/^    - assets\/(jsons|quran_lab|fonts\/quran_fonts_qfc4)\/?$/d' \
+    -e '/^    - assets\/[a-z_]+\.json(\.gz)?$/d' \
+    -e '/^    - family: surahName$/,/surah_name_naskh\.ttf$/d' \
+    pubspec.yaml
+}
+if git diff --name-only --diff-filter=U | grep -qxF pubspec.yaml; then
+  git checkout --theirs -- pubspec.yaml && echo "  ✔ theirs pubspec.yaml (then stripped)"
+fi
 if ! grep -q '^<<<<<<<' pubspec.yaml; then
-  sed -i -E '/^  (audio_service|just_audio|just_audio_[a-z_]+|record|sherpa_onnx|sherpa_onnx_[a-z0-9_]+):/d' pubspec.yaml
-  sed -i -E '/^    - assets\/quran_lab\/?$/d; /^    - assets\/fonts\/quran_fonts_qfc4\/?$/d; /^    - assets\/jsons\/?$/d; /^    - assets\/(en|saadi)\.json\.gz$/d; /^    - assets\/$/d' pubspec.yaml
+  strip_pubspec
   git add pubspec.yaml
 fi
 

@@ -55,7 +55,7 @@ Each fork edit is marked with a `// fork:` comment where possible.
 | `lib/src/quran/presentation/widgets/auto_scroll/auto_scroll_speed_slider.dart` | `CustomWidgets.customSvgWithColor` (from audio) → `SvgPicture.asset` | re-apply |
 | `lib/src/core/widgets/patched_preload_page_view.dart` | `scrollCacheExtent: ScrollCacheExtent.pixels(..)` → `cacheExtent:` (needed for Flutter 3.41) | can drop once the Flutter SDK is upgraded |
 | `lib/quran.dart`, `lib/quran_library.dart` | No audio/tasmee imports, parts and exports. The fork's services are imported, and `quran_library_screen_future.dart` and `quran_ctrl_fast_loading.dart` are parts. `QuranDownloader` is exported. | take upstream's new parts, keep the fork's lines |
-| `pubspec.yaml` | No `audio_service`, `just_audio*`, `record`, `sherpa_onnx*`. `assets:` bundles only fonts/svg/images (no `jsons`, `quran_fonts_qfc4`, `quran_lab`, or root `*.json.gz`). | the script strips these; check the `assets:` list |
+| `pubspec.yaml` | No `audio_service`, `just_audio*`, `record`, `sherpa_onnx*`. `assets:` bundles only fonts/svg/images (no `jsons`, `quran_fonts_qfc4`, `quran_lab`, or root `*.json.gz`). | automatic: the script takes upstream's file and strips these lines (also the `surahName` font family, whose font file the fork deleted) |
 | `android/src/main/AndroidManifest.xml`, `example/ios/Runner/Info.plist`, `example/macos/Runner/*.entitlements` | No audio service or microphone permissions | keep ours |
 | `test/quran_fonts_service_cache_version_test.dart` | Sets `QuranRemoteAssets.debugLoader` to read the repo's font files | re-apply the 3 lines |
 

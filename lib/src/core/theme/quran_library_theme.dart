@@ -63,7 +63,7 @@ class QuranLibraryTheme extends StatelessWidget {
                       child: QuranTopBarTheme(
                         style: topBarStyle,
                         child: KeyedSubtree(
-                          // fork: was AyahDownloadManagerTheme (audio removed)
+                          // fork: was the ayah download manager theme (audio removed)
                           child: _wrapIfNotNull(
                             displayModeBarStyle,
                             (s, c) => DisplayModeBarTheme(style: s, child: c),

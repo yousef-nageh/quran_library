@@ -73,7 +73,6 @@ flutter:
     - assets/svg/
     - assets/images/
 
-
   fonts:
     - family: kufi
       fonts:
@@ -84,7 +83,6 @@ flutter:
     - family: hafs
       fonts:
         - asset: assets/fonts/UthmanicHafs_V20.ttf
-
     - family: cairo
       fonts:
         - asset: assets/fonts/Cairo-Bold.ttf
