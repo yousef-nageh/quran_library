@@ -200,7 +200,10 @@ class GzipJsonAssetService {
       if (!await dir.exists()) {
         await dir.create(recursive: true);
       }
-      await file.writeAsBytes(utf8.encode(text), flush: true);
+      // fork: write to a temp file then rename, so a killed app never leaves a half-written cache
+      final tmp = File('${file.path}.tmp');
+      await tmp.writeAsBytes(utf8.encode(text), flush: true);
+      await tmp.rename(file.path);
     } catch (_) {
       // تجاهل أخطاء الكتابة حتى لا نكسر التحميل الأساسي.
     }

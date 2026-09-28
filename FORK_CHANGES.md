@@ -27,8 +27,8 @@ are served from this repo's `main` branch. If a JSON file changed, bump
 
 | File | What it does |
 |---|---|
-| `lib/src/services/quran_remote_assets.dart` | Loads `packages/quran_library/assets/...` from the CDN (`cdnBaseUrl` + same path). `dataVersion` clears the JSON cache when the server data changes. |
-| `lib/src/services/quran_downloader.dart` | `ensureInitialized()` downloads the startup JSON files. `loadJson(name)` is also available. |
+| `lib/src/services/quran_remote_assets.dart` | Loads `packages/quran_library/assets/...` from the CDN (`cdnBaseUrl` + same path). Retries network errors (`retryDelays`) and only accepts complete files (Content-Length + gzip CRC32/size trailer check), so a cut download is never cached. `dataVersion` clears the JSON cache when the server data changes. |
+| `lib/src/services/quran_downloader.dart` | `ensureInitialized()` downloads the startup JSON files; each is checked to be valid JSON and a broken cached copy is deleted and downloaded again. Files that finished stay cached, so a retry only downloads the missing ones. `loadJson(name)` is also available. |
 | `lib/src/services/isolate_service.dart` | Parses the Quran data on a background isolate. |
 | `lib/src/services/quran_ctrl_fast_loading.dart` | `loadQuranDataV3InBackground()` / `fetchSurahsInBackground()`. **Mirrors upstream's `QuranCtrl.loadQuranDataV3()`**: after a merge, copy any new steps from upstream into it (the script shows the upstream diff). |
 | `lib/src/pages/quran_library_screen_future.dart` | Loading screen: version check, `init`, download, and prepare. |
@@ -40,7 +40,7 @@ Each fork edit is marked with a `// fork:` comment where possible.
 
 | Upstream file | Fork edit | On conflict |
 |---|---|---|
-| `lib/src/service/gzip_json_asset_service_io.dart` | `rootBundle.load` → `QuranRemoteAssets.load` (+ its import) | take upstream, re-apply the 2 lines |
+| `lib/src/service/gzip_json_asset_service_io.dart` | `rootBundle.load` → `QuranRemoteAssets.load` (+ its import); `_writeToDisk` writes a `.tmp` file then renames it (no half-written cache if the app is killed) | take upstream, re-apply these lines |
 | `lib/src/quran/core/services/quran_fonts_service.dart` | `rootBundle.load` → `QuranRemoteAssets.load` in `_decompressFromAsset`, and `_pageLoadFutures.remove(page)` in the catch of `_loadSinglePage` | take upstream, re-apply the 2 lines |
 | `lib/src/pages/quran_library_screen.dart` | `build()` wraps in `QuranLibraryScreenFuture` and calls `_buildScreen` (upstream's `build` body, renamed). Audio slider, tasmee control, audio styles and params removed. | take upstream, rename `build`→`_buildScreen`, re-add the wrapper, delete audio/tasmee |
 | `lib/src/flutter_quran_utils.dart` | `init()` doesn't load the data. `prepareQuranScreen()` added (calls the fast loading). The audio/word-audio API is removed. | take upstream, move the data loading out of `init`, delete audio members |

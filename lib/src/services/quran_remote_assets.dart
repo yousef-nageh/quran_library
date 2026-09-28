@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:archive/archive.dart' show GZipDecoder, getCrc32;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -20,7 +21,7 @@ abstract final class QuranRemoteAssets {
 
   /// Bump this when the JSON files on the server change, so the decoded JSON
   /// cached on users' devices is cleared and downloaded again.
-  static const dataVersion = 2;
+  static const dataVersion = 3;
 
   static const _assetPrefix = 'packages/quran_library/assets/';
 
@@ -34,29 +35,117 @@ abstract final class QuranRemoteAssets {
 
   static final _dio = Dio()
     ..options.headers['User-Agent'] = 'QuranApp/1.0'
-    ..options.connectTimeout = const Duration(seconds: 10)
-    ..options.receiveTimeout = const Duration(seconds: 60);
+    ..options.connectTimeout = const Duration(seconds: 15)
+    ..options.receiveTimeout = const Duration(seconds: 120);
+
+  /// Waits between attempts; its length + 1 is the number of attempts.
+  @visibleForTesting
+  static List<Duration> retryDelays = const [
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+  ];
+
+  /// Replaces the HTTP request only (tests only), so retry and the
+  /// completeness check still run.
+  @visibleForTesting
+  static Future<Response<List<int>>> Function(String url)? debugFetch;
 
   static Future<void>? _versionCheck;
 
   /// Loads [assetPath]: from the CDN for package data assets, otherwise from
   /// the app bundle.
+  ///
+  /// Network errors are retried (see [retryDelays]) and a file is only
+  /// returned when it arrived complete, so a broken download is never cached.
   static Future<ByteData> load(String assetPath) async {
     final loader = debugLoader;
     if (loader != null) return loader(assetPath);
     if (!assetPath.startsWith(_assetPrefix)) return rootBundle.load(assetPath);
 
     final url = urlFor(assetPath);
+    final attempts = retryDelays.length + 1;
+    for (var attempt = 1;; attempt++) {
+      try {
+        final bytes = await _download(url);
+        log('[QuranRemoteAssets] 💾 $url '
+            '(${(bytes.length / 1048576).toStringAsFixed(2)} MB)');
+        return ByteData.sublistView(bytes);
+      } catch (e) {
+        final retry = attempt < attempts && _isRetryable(e);
+        log('[QuranRemoteAssets] ❌ attempt $attempt/$attempts $url – $e'
+            '${retry ? ' (retrying)' : ''}');
+        if (!retry) rethrow;
+        await Future<void>.delayed(retryDelays[attempt - 1]);
+      }
+    }
+  }
+
+  static Future<Uint8List> _download(String url) async {
+    final fetch = debugFetch;
+    final rsp = fetch != null
+        ? await fetch(url)
+        : await _dio.get<List<int>>(url,
+            options: Options(responseType: ResponseType.bytes));
+    final data = rsp.data;
+    if (data == null || data.isEmpty) {
+      throw const IncompleteDownloadException('empty response');
+    }
+    final bytes = data is Uint8List ? data : Uint8List.fromList(data);
+
+    // The server's size must match (skip when the body was re-compressed).
+    final expected =
+        int.tryParse(rsp.headers.value(Headers.contentLengthHeader) ?? '');
+    final encoded = rsp.headers.value('content-encoding') != null;
+    if (expected != null && !encoded && expected != bytes.length) {
+      throw IncompleteDownloadException(
+          'got ${bytes.length} of $expected bytes');
+    }
+
+    // A .gz must match its own trailer (CRC32 + size), which proves it is
+    // complete. The decoders don't check this: a cut file decodes silently.
+    if (url.endsWith('.gz') && !isCompleteGzip(bytes)) {
+      throw const IncompleteDownloadException('gzip data is cut or corrupt');
+    }
+    return bytes;
+  }
+
+  /// Whether [bytes] is a whole gzip file: it decodes, and the CRC32 and
+  /// size stored in its last 8 bytes match the decoded data.
+  @visibleForTesting
+  static bool isCompleteGzip(Uint8List bytes) {
+    if (bytes.length < 18 || bytes[0] != 0x1f || bytes[1] != 0x8b) {
+      return false;
+    }
+    final List<int> decoded;
     try {
-      final rsp = await _dio.get<List<int>>(url,
-          options: Options(responseType: ResponseType.bytes));
-      final bytes = Uint8List.fromList(rsp.data!);
-      log('[QuranRemoteAssets] 💾 $url '
-          '(${(bytes.length / 1048576).toStringAsFixed(2)} MB)');
-      return ByteData.sublistView(bytes);
-    } catch (e) {
-      log('[QuranRemoteAssets] ❌ $url – $e');
-      rethrow;
+      decoded = const GZipDecoder().decodeBytes(bytes);
+    } catch (_) {
+      return false;
+    }
+    final trailer = ByteData.sublistView(bytes, bytes.length - 8);
+    final crc = trailer.getUint32(0, Endian.little);
+    final size = trailer.getUint32(4, Endian.little);
+    return size == (decoded.length & 0xFFFFFFFF) && crc == getCrc32(decoded);
+  }
+
+  static bool _isRetryable(Object e) {
+    if (e is IncompleteDownloadException) return true;
+    if (e is SocketException || e is HttpException) return true;
+    if (e is! DioException) return false;
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+      case DioExceptionType.connectionError:
+      case DioExceptionType.unknown:
+        return true;
+      case DioExceptionType.badResponse:
+        final code = e.response?.statusCode ?? 0;
+        return code >= 500 || code == 408 || code == 429;
+      default:
+        // badCertificate, cancel, and any type added in a newer dio
+        return false;
     }
   }
 
@@ -84,4 +173,13 @@ abstract final class QuranRemoteAssets {
       log('[QuranRemoteAssets] data version check failed: $e');
     }
   }
+}
+
+/// A download ended before the whole file arrived.
+class IncompleteDownloadException implements Exception {
+  const IncompleteDownloadException(this.message);
+  final String message;
+
+  @override
+  String toString() => 'IncompleteDownloadException: $message';
 }

@@ -81,10 +81,10 @@ class _QuranLibraryScreenFutureState extends State<QuranLibraryScreenFuture> {
     await QuranLibrary.prepareQuranScreen();
   }
 
-  @override
-  void dispose() {
-
-    super.dispose();
+  /// Tries again after a failure. Files that already downloaded are read
+  /// from the cache, so only the missing ones are downloaded.
+  void _retry() {
+    setState(() => _initializationFuture = _initializeQuranData());
   }
 
   @override
@@ -122,42 +122,51 @@ class _QuranLibraryScreenFutureState extends State<QuranLibraryScreenFuture> {
 
         // Show error if initialization failed
         if (snapshot.hasError) {
+          log('Quran data initialization failed: ${snapshot.error}',
+              name: 'QuranLibraryScreenFuture', stackTrace: snapshot.stackTrace);
+          final textColor = widget.isDark ? Colors.white : Colors.black;
           return widget.errorBuilder?.call(snapshot.error!) ??
               Scaffold(
                 backgroundColor: widget.backgroundColor ??
                     AppColors.getBackgroundColor(widget.isDark),
                 body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: widget.isDark ? Colors.red[300] : Colors.red,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'خطأ في تحميل البيانات',
-                        style: TextStyle(
-                          color: widget.isDark ? Colors.white : Colors.black,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.wifi_off_rounded,
+                          size: 64,
+                          color: widget.isDark ? Colors.red[300] : Colors.red,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          '${snapshot.error}',
+                        const SizedBox(height: 16),
+                        Text(
+                          'تعذر تحميل بيانات القرآن',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color:
-                                widget.isDark ? Colors.white70 : Colors.black87,
+                            color: textColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'تحقق من الاتصال بالإنترنت ثم أعد المحاولة',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor.withValues(alpha: 0.7),
                             fontSize: 14,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: _retry,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('إعادة المحاولة'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
+import 'dart:isolate';
 
 import 'package:quran_library/src/service/gzip_json_asset_service.dart';
 import 'package:quran_library/src/services/quran_remote_assets.dart';
@@ -38,7 +41,7 @@ abstract final class QuranDownloader {
       throw StateError('"$filename" is not a known Quran data file.');
     }
     await QuranRemoteAssets.ensureDataVersion();
-    return _jsonService.loadJsonDynamic(assetPath);
+    return jsonDecode(await _loadTextRepairing(assetPath));
   }
 
   // ================  private  ================
@@ -72,15 +75,52 @@ abstract final class QuranDownloader {
 
   static Future<void> _initialize() async {
     await QuranRemoteAssets.ensureDataVersion();
-    // Warm the disk cache in parallel; already-cached files are read locally.
+    // Download in parallel. Each file that finishes is cached, so a retry
+    // only downloads the ones that failed.
+    final failed = <String>[];
+    Object? firstError;
+    StackTrace? firstStack;
     await Future.wait(_kStartupFiles.map((name) async {
       try {
-        await _jsonService.loadText(_kAssets[name]!);
+        await _loadTextRepairing(_kAssets[name]!);
       } catch (e, s) {
         _log('❌ $name  –  $e');
-        Error.throwWithStackTrace(Exception('Failed to download $name'), s);
+        failed.add(name);
+        firstError ??= e;
+        firstStack ??= s;
       }
     }));
+    if (failed.isNotEmpty) {
+      Error.throwWithStackTrace(
+          Exception('Failed to download ${failed.join(', ')}: $firstError'),
+          firstStack!);
+    }
+  }
+
+  /// Loads [assetPath] and checks it is complete JSON (parsed off the UI
+  /// thread). If the cached copy is broken (e.g. saved by an older version
+  /// from an incomplete download), deletes it and downloads it again once.
+  static Future<String> _loadTextRepairing(String assetPath) async {
+    try {
+      return await _loadValidText(assetPath);
+    } on FormatException catch (e) {
+      _log('⚠ broken cache for $assetPath ($e), downloading again');
+      final path = await _jsonService.diskCachePathFor(assetPath);
+      if (path != null) {
+        final file = File(path);
+        if (file.existsSync()) await file.delete();
+      }
+      GzipJsonAssetService.clearCache();
+      return _loadValidText(assetPath);
+    }
+  }
+
+  static Future<String> _loadValidText(String assetPath) async {
+    final text = await _jsonService.loadText(assetPath);
+    await Isolate.run(() {
+      jsonDecode(text); // throws FormatException when incomplete
+    });
+    return text;
   }
 
   static void _log(String msg) => log('[QuranDownloader] $msg');
