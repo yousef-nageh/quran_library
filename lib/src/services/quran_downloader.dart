@@ -5,8 +5,9 @@ import 'dart:isolate';
 
 import 'package:quran_library/src/service/gzip_json_asset_service.dart';
 import 'package:quran_library/src/services/quran_remote_assets.dart';
+import 'package:quran_library/src/services/quran_static_fonts.dart';
 
-/// Downloader for the Quran JSON assets.
+/// Downloader for the Quran JSON assets and the static fonts.
 ///
 /// The files are fetched from the CDN by [QuranRemoteAssets] and cached on
 /// disk by upstream's [GzipJsonAssetService]. [ensureInitialized] downloads
@@ -80,6 +81,14 @@ abstract final class QuranDownloader {
     final failed = <String>[];
     Object? firstError;
     StackTrace? firstStack;
+    // The static fonts (hafs, cairo, ...) download alongside the JSON.
+    final fonts = QuranStaticFonts.ensureLoaded().then<void>((_) {},
+        onError: (Object e, StackTrace s) {
+      _log('❌ fonts  –  $e');
+      failed.add('fonts');
+      firstError ??= e;
+      firstStack ??= s;
+    });
     await Future.wait(_kStartupFiles.map((name) async {
       try {
         await _loadTextRepairing(_kAssets[name]!);
@@ -90,6 +99,7 @@ abstract final class QuranDownloader {
         firstStack ??= s;
       }
     }));
+    await fonts;
     if (failed.isNotEmpty) {
       Error.throwWithStackTrace(
           Exception('Failed to download ${failed.join(', ')}: $firstError'),

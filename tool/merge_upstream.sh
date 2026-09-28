@@ -93,7 +93,11 @@ strip_pubspec() {
     -e '/^    - assets\/(jsons|quran_lab|fonts\/quran_fonts_qfc4)\/?$/d' \
     -e '/^    - assets\/[a-z_]+\.json(\.gz)?$/d' \
     -e '/^    - family: surahName$/,/surah_name_naskh\.ttf$/d' \
+    -e '/^    - assets\/fonts\//d' \
+    -e '/^  fonts:$/,$d' \
     pubspec.yaml
+  # fonts are downloaded at runtime (QuranStaticFonts); drop trailing blank lines
+  sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' pubspec.yaml
 }
 if git diff --name-only --diff-filter=U | grep -qxF pubspec.yaml; then
   git checkout --theirs -- pubspec.yaml && echo "  ✔ theirs pubspec.yaml (then stripped)"

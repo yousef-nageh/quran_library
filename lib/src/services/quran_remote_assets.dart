@@ -107,7 +107,30 @@ abstract final class QuranRemoteAssets {
     if (url.endsWith('.gz') && !isCompleteGzip(bytes)) {
       throw const IncompleteDownloadException('gzip data is cut or corrupt');
     }
+    if ((url.endsWith('.ttf') || url.endsWith('.otf')) &&
+        !isCompleteFont(bytes)) {
+      throw const IncompleteDownloadException('font file is cut or corrupt');
+    }
     return bytes;
+  }
+
+  /// Whether [bytes] is a whole TrueType/OpenType file: every table listed in
+  /// its header lies inside the data (a cut download fails this).
+  static bool isCompleteFont(Uint8List bytes) {
+    if (bytes.length < 12) return false;
+    final data = ByteData.sublistView(bytes);
+    final tag = data.getUint32(0);
+    const trueType = 0x00010000, otto = 0x4F54544F, trueTag = 0x74727565;
+    if (tag != trueType && tag != otto && tag != trueTag) return false;
+    final numTables = data.getUint16(4);
+    if (numTables == 0 || 12 + numTables * 16 > bytes.length) return false;
+    for (var i = 0; i < numTables; i++) {
+      final record = 12 + i * 16;
+      final offset = data.getUint32(record + 8);
+      final length = data.getUint32(record + 12);
+      if (offset + length > bytes.length) return false;
+    }
+    return true;
   }
 
   /// Whether [bytes] is a whole gzip file: it decodes, and the CRC32 and
