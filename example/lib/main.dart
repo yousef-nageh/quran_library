@@ -68,13 +68,25 @@ class FullQuran extends StatelessWidget {
   Widget build(BuildContext context) {
     return QuranLibraryScreen(
       parentContext: context,
-      isDark: true,
+      isDark: false,
+      isShowTabBar: true,
+      isFontsLocal: false,
+      useDefaultAppBar: true,
+      enableWordSelection: true,
+      isShowDisplayModeBar: true,
       showAyahBookmarkedIcon: true,
-      // appLanguageCode: 'ar',
+      appLanguageCode: 'ar',
+      // isAyahBookmarked: (ayah) =>
+      //     ayah.ayahUQNumber == 12 && ayah.surahNumber == 2,
+      ayahMenuStyle:
+          AyahMenuStyle.defaults(isDark: false, context: context).copyWith(
+        customMenuItems: [
+          const Icon(Icons.share, size: 28, color: Colors.teal),
+        ],
+      ),
       // ayahIconColor: Colors.teal,
       // backgroundColor: Colors.white,
       // textColor: Colors.black,
-      isFontsLocal: false,
       // tafsirStyle:
       //     TafsirStyle.defaults(isDark: false, context: context).copyWith(
       //   widthOfBottomSheet: 500,
@@ -82,24 +94,6 @@ class FullQuran extends StatelessWidget {
       //   changeTafsirDialogHeight: MediaQuery.sizeOf(context).height * 0.9,
       //   changeTafsirDialogWidth: 400,
       // ),
-      // anotherMenuChild:
-      //     const Icon(Icons.play_arrow_outlined, size: 28, color: Colors.teal),
-      // anotherMenuChildOnTap: (ayah) {
-      //   // SurahAudioController.instance.state.currentAyahUnequeNumber =
-      //   //     ayah.ayahUQNumber;
-      //   AudioCtrl.instance
-      //       .playAyah(context, ayah.ayahUQNumber, playSingleAyah: true);
-      //   log('Another Menu Child Tapped: ${ayah.ayahUQNumber}');
-      // },
-      // secondMenuChild:
-      //     const Icon(Icons.playlist_play, size: 28, color: Colors.teal),
-      // secondMenuChildOnTap: (ayah) {
-      //   // SurahAudioController.instance.state.currentAyahUnequeNumber =
-      //   //     ayah.ayahUQNumber;
-      //   AudioCtrl.instance
-      //       .playAyah(context, ayah.ayahUQNumber, playSingleAyah: false);
-      //   log('Second Menu Child Tapped: ${ayah.ayahUQNumber}');
-      // },
     );
   }
 }
@@ -113,14 +107,10 @@ class SingleSurah extends StatelessWidget {
   Widget build(BuildContext context) {
     return SurahDisplayScreen(
       parentContext: context,
-      surahNumber: 18,
+      surahNumber: 2,
       isDark: false,
       appLanguageCode: 'ar',
-      useDefaultAppBar: false,
-      anotherMenuChild:
-          const Icon(Icons.play_arrow_outlined, size: 28, color: Colors.grey),
-      secondMenuChild:
-          const Icon(Icons.playlist_play, size: 28, color: Colors.grey),
+      useDefaultAppBar: true,
     );
   }
 }
@@ -132,12 +122,22 @@ class SingleAyah extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: GetSingleAyah(
-        surahNumber: 114,
-        ayahNumber: 4,
+        surahNumber: 1,
+        ayahNumber: 2,
         fontSize: 30,
         isBold: false,
+        islocalFont: false,
+        isDark: true,
+        textHeight: 1.5,
+        enabledTajweed: true,
+        enableWordSelection: true,
+        onWordTap: (ref) {
+          print(
+              'سورة: ${ref.surahNumber}, آية: ${ref.ayahNumber}, كلمة: ${ref.wordNumber}');
+        },
+        selectedWordColor: Colors.amber.withValues(alpha: 0.3),
       ),
     );
   }
@@ -171,13 +171,7 @@ class QuranPages extends StatelessWidget {
         highlightedRanges: const [
           (startSurah: 2, startAyah: 30, endSurah: 2, endAyah: 35)
         ],
-        withPageView: true,
-        // تمكين/تعطيل السحب بين الصفحات
-        anotherMenuChild:
-            const Icon(Icons.play_arrow_outlined, size: 28, color: Colors.teal),
-
-        secondMenuChild:
-            const Icon(Icons.playlist_play, size: 28, color: Colors.teal),
+        withPageView: true, // تمكين/تعطيل السحب بين الصفحات
       ),
     );
   }

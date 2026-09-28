@@ -5,10 +5,17 @@ class TafsirCtrl extends GetxController {
   static TafsirCtrl get instance =>
       GetInstance().putOrFind(() => TafsirCtrl._privateConstructor());
 
+  static const String _glPkg =
+      'https://gitlab.com/api/v4/projects/haozo89%2Fislamic_database/packages/generic';
+  static const String _glTafsirAndTranslate =
+      '$_glPkg/tafsir_and_translate/1.0.0';
+  static const String _ghTafsirAndTranslate =
+      'https://github.com/alheekmahlib/Islamic_database/releases/download/tafsir_and_translate';
+
   // Rx<TafsirDatabase?> database = Rx<TafsirDatabase?>(null);
   RxList<TafsirTableData> tafseerList = <TafsirTableData>[].obs;
 
-  static const _defaultDownloadedDbName = 'saadi.json';
+  static const _defaultDownloadedDbName = 'saadi.json.gz';
   static const _defaultDownloadedTafsirName = 'saadi';
   static const _defaultDownloadedTranslationLangCode = 'en';
 
@@ -119,6 +126,41 @@ class TafsirCtrl extends GetxController {
 
   bool _isTafsirInitialized = false;
 
+  bool _looksLikeGzip(Uint8List bytes) {
+    if (bytes.length < 2) return false;
+    return bytes[0] == 0x1f && bytes[1] == 0x8b;
+  }
+
+  String _decodeBytesToText(Uint8List bytes) {
+    if (_looksLikeGzip(bytes)) {
+      return GzipJsonAssetService.decodeGzipBytesToString(bytes);
+    }
+    return utf8.decode(bytes);
+  }
+
+  Future<String> _getRemoteText(String url) async {
+    final dio = Dio();
+    final resp = await dio.get<List<int>>(
+      url,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final data = resp.data ?? const <int>[];
+    return _decodeBytesToText(Uint8List.fromList(data));
+  }
+
+  Future<String> _getRemoteTextWithFallback(String url, String fallbackUrl) async {
+    try {
+      return await _getRemoteText(url);
+    } catch (_) {
+      return await _getRemoteText(fallbackUrl);
+    }
+  }
+
+  Future<String> _getLocalFileText(String filePath) async {
+    final bytes = await File(filePath).readAsBytes();
+    return _decodeBytesToText(Uint8List.fromList(bytes));
+  }
+
   @override
   Future<void> onInit() async {
     // start from defaults
@@ -198,11 +240,10 @@ class TafsirCtrl extends GetxController {
         } else {
           if (kIsWeb) {
             final url =
-                'https://raw.githubusercontent.com/alheekmahlib/Islamic_database/refs/heads/main/tafseer_database/${selectedTafsir.databaseName}';
-            final dio = Dio();
-            final resp = await dio.get<String>(url,
-                options: Options(responseType: ResponseType.plain));
-            jsonString = resp.data ?? '[]';
+                '$_ghTafsirAndTranslate/${selectedTafsir.databaseName}';
+            final urlGl =
+                '$_glTafsirAndTranslate/${selectedTafsir.databaseName}';
+            jsonString = await _getRemoteTextWithFallback(url, urlGl);
           } else {
             String filePath = join(_appDir.path, selectedTafsir.databaseName);
             final exists = await File(filePath).exists();
@@ -211,7 +252,7 @@ class TafsirCtrl extends GetxController {
               await tafsirAndTranslationDownload(radioValue.value);
               return;
             } else {
-              jsonString = await File(filePath).readAsString();
+              jsonString = await _getLocalFileText(filePath);
             }
           }
         }
@@ -268,11 +309,10 @@ class TafsirCtrl extends GetxController {
         jsonString = json.encode(jsonData);
       } else if (kIsWeb) {
         final url =
-            'https://raw.githubusercontent.com/alheekmahlib/Islamic_database/refs/heads/main/quran_database/translate/$translationLangCode.json';
-        final dio = Dio();
-        final resp = await dio.get<String>(url,
-            options: Options(responseType: ResponseType.plain));
-        jsonString = resp.data ?? '{}';
+            '$_ghTafsirAndTranslate/$translationLangCode.json.gz';
+        final urlGl =
+            '$_glTafsirAndTranslate/$translationLangCode.json.gz';
+        jsonString = await _getRemoteTextWithFallback(url, urlGl);
       } else {
         final String path = join(_appDir.path, '$translationLangCode.json');
         final exists = await File(path).exists();
@@ -282,7 +322,7 @@ class TafsirCtrl extends GetxController {
           final exists2 = await File(path).exists();
           if (!exists2) throw Exception('Translation file not found');
         }
-        jsonString = await File(path).readAsString();
+        jsonString = await _getLocalFileText(path);
       }
 
       // تحقق من نوع البنية في الملف
@@ -441,17 +481,19 @@ class TafsirCtrl extends GetxController {
     final selected = tafsirAndTranslationsItems[idx];
     if (!selected.isTranslation) {
       path = join(_appDir.path, selected.databaseName);
-      fileUrl =
-          'https://github.com/alheekmahlib/Islamic_database/raw/refs/heads/main/tafseer_database/${selected.databaseName}';
+      fileUrl = '$_ghTafsirAndTranslate/${selected.databaseName}';
     } else {
       path = join(_appDir.path, '${selected.fileName}.json');
-      fileUrl =
-          'https://github.com/alheekmahlib/Islamic_database/raw/refs/heads/main/quran_database/translate/${selected.fileName}.json';
+      fileUrl = '$_ghTafsirAndTranslate/${selected.fileName}.json.gz';
     }
+
+    final fallbackUrl = !selected.isTranslation
+        ? '$_glTafsirAndTranslate/${selected.databaseName}'
+        : '$_glTafsirAndTranslate/${selected.fileName}.json.gz';
 
     if (!onDownloading.value) {
       onDownloading.value = true;
-      await downloadFile(path, fileUrl).then((_) async {
+      await downloadFile(path, fileUrl, fallbackUrl: fallbackUrl).then((_) async {
         log('Download completed for $path', name: 'TafsirCtrl');
         _onDownloadSuccess(i);
         await _saveTafsirDownloadIndex(i);

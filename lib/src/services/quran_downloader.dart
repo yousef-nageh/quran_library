@@ -23,25 +23,65 @@ abstract final class QuranDownloader {
     await _initOnce;
   }
 
-  /// Reads a previously downloaded JSON file.
+  /// Reads a downloaded JSON file.
+  ///
+  /// Files that are not needed at startup (e.g. the QPC v4 and word-by-word
+  /// data) are downloaded on first use.
   static Future<dynamic> loadJson(String filename) async {
+    await ensureInitialized();
     final file = File(p.join(_root, filename));
     if (!file.existsSync()) {
-      throw StateError(
-          '"$filename" not found. Call QuranDownloader.ensureInitialized() first.');
+      final url = _kAssets[filename];
+      if (url == null) {
+        throw StateError('"$filename" is not a known Quran data file.');
+      }
+      await (_onDemand[filename] ??= _downloadOnDemand(filename, url, file));
     }
     return jsonDecode(await file.readAsString());
   }
 
+  /// Downloads a `.gz` file from [url] and returns the decompressed bytes.
+  ///
+  /// Used for files that are cached elsewhere (e.g. the QCF4 page fonts).
+  static Future<Uint8List> downloadGzipBytes(String url) async {
+    final rsp = await _dio.get<List<int>>(url,
+        options: Options(responseType: ResponseType.bytes));
+    return Isolate.run(() => _gzipDecode(rsp.data!));
+  }
+
+  /// Base URL of the assets served from this fork's GitHub repo via jsDelivr.
+  static const cdnBaseUrl =
+      'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets';
+
   // ================  private  ================
-  static const _kFolder = 'quran_data';
+  // bump the folder when the data files change so old caches are re-downloaded
+  static const _kFolder = 'quran_data_v2';
   static const _kAssets = {
-    'en.json': 'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets/jsons/en.json.gz',
-    'quranV3.json': 'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets/jsons/quranV3.json.gz',
-    'quran_hafs.json': 'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets/jsons/quran_hafs.json.gz',
-    'saadi.json': 'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets/jsons/saadi.json.gz',
-    'surahs_name.json': 'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets/jsons/surahs_name.json.gz',
+    'en.json': '$cdnBaseUrl/jsons/en.json.gz',
+    'quran_hafs.json': '$cdnBaseUrl/jsons/quran_hafs.json.gz',
+    'quranV4.json': '$cdnBaseUrl/jsons/quranV4.json.gz',
+    'saadi.json': '$cdnBaseUrl/jsons/saadi.json.gz',
+    'surahs_name.json': '$cdnBaseUrl/jsons/surahs_name.json.gz',
+    'qpc-v4.json': '$cdnBaseUrl/jsons/qpc-v4.json.gz',
+    'qpc_v4_ayah_info.json': '$cdnBaseUrl/jsons/qpc_v4_ayah_info.json.gz',
+    'qpc-hafs-word-by-word.json':
+        '$cdnBaseUrl/jsons/qpc-hafs-word-by-word.json.gz',
   };
+
+  /// Files downloaded by [ensureInitialized]; the rest are fetched on demand.
+  static const _kStartupFiles = {
+    'en.json',
+    'quranV4.json',
+    'saadi.json',
+    'surahs_name.json',
+  };
+
+  static final Map<String, Future<void>> _onDemand = {};
+
+  static final _dio = Dio()
+    ..options.headers['User-Agent'] = 'QuranApp/1.0'
+    ..options.connectTimeout = const Duration(seconds: 10)
+    ..options.receiveTimeout = const Duration(seconds: 60);
 
   static final _initOnce = _initialize();
   static bool get _isInitialized => _root.isNotEmpty;
@@ -53,6 +93,7 @@ abstract final class QuranDownloader {
 
     final missing = <_Task>[];
     for (final entry in _kAssets.entries) {
+      if (!_kStartupFiles.contains(entry.key)) continue;
       final target = File(p.join(_root, entry.key));
       if (!target.existsSync()) missing.add(_Task(entry.key, entry.value, target));
     }
@@ -63,17 +104,23 @@ abstract final class QuranDownloader {
   }
 
   static Future<void> _downloadInParallel(List<_Task> tasks) async {
-    final dio = Dio()
-      ..options.headers['User-Agent'] = 'QuranApp/1.0'
-      ..options.connectTimeout = const Duration(seconds: 10)
-      ..options.receiveTimeout = const Duration(seconds: 30);
-
     final pool = <Future<void>>[];
     for (final t in tasks) {
-      pool.add(_fetchAndDecode(dio, t));
+      pool.add(_fetchAndDecode(_dio, t));
       if (pool.length >= 4) await pool.removeAt(0); // throttle
     }
     await Future.wait(pool);
+  }
+
+  static Future<void> _downloadOnDemand(
+      String filename, String url, File target) async {
+    try {
+      await _fetchAndDecode(_dio, _Task(filename, url, target));
+    } catch (_) {
+      // allow a retry on the next call
+      _onDemand.remove(filename);
+      rethrow;
+    }
   }
 
   static Future<void> _fetchAndDecode(Dio dio, _Task t) async {

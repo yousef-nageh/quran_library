@@ -6,14 +6,17 @@ class _QuranTopBar extends StatelessWidget {
   final bool? isFontsLocal;
   final DownloadFontsDialogStyle? downloadFontsDialogStyle;
   final Color? backgroundColor;
+  final bool? isSingleSurah;
+  final bool? isPagesView;
 
   const _QuranTopBar(
     this.languageCode,
     this.isDark, {
-
     this.isFontsLocal,
     this.downloadFontsDialogStyle,
     this.backgroundColor,
+    this.isSingleSurah = false,
+    this.isPagesView = false,
   });
 
   @override
@@ -21,6 +24,9 @@ class _QuranTopBar extends StatelessWidget {
     // Centralized theming (read from theme or fallback to defaults)
     final QuranTopBarStyle defaults = QuranTopBarTheme.of(context)?.style ??
         QuranTopBarStyle.defaults(isDark: isDark, context: context);
+
+    final TajweedMenuStyle tajweedStyle = TajweedMenuTheme.of(context)?.style ??
+        TajweedMenuStyle.defaults(isDark: isDark, context: context);
     final Color bgColor = backgroundColor ??
         (defaults.backgroundColor ?? AppColors.getBackgroundColor(isDark));
 
@@ -72,14 +78,73 @@ class _QuranTopBar extends StatelessWidget {
                   _showMenuBottomSheet(context, defaults);
                 },
               ),
+            if ((defaults.showMenuButton ?? true) &&
+                (QuranCtrl.instance.state.fontsSelected.value == 0))
+              IconButton(
+                icon: SvgPicture.asset(
+                    defaults.tajweedIconPath ?? AssetsPath.assets.exclamation,
+                    height: defaults.iconSize,
+                    colorFilter: ColorFilter.mode(
+                        defaults.iconColor ??
+                            Theme.of(context).colorScheme.primary,
+                        BlendMode.srcIn)),
+                onPressed: () {
+                  _showDialog(context, tajweedStyle);
+                },
+              ),
             const Spacer(),
             if (defaults.customTopBarWidgets != null)
               ...defaults.customTopBarWidgets!,
             const Spacer(),
             Row(
               children: [
-
-                if (defaults.showFontsButton ?? true)
+                if (defaults.showAutoScrollButton ?? true)
+                  Obx(() {
+                    final isAutoScrollActive =
+                        AutoScrollCtrl.instance.state.isActive.value;
+                    return QuranCtrl.instance.state.displayMode.value ==
+                            QuranDisplayMode.defaultMode
+                        ? IconButton(
+                            icon: SvgPicture.asset(
+                                defaults.autoScrollIconPath ??
+                                    AssetsPath.assets.arrowDown,
+                                height: defaults.iconSize,
+                                colorFilter: ColorFilter.mode(
+                                    isAutoScrollActive
+                                        ? (defaults.iconColor ??
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primary)
+                                        : (defaults.iconColor ??
+                                                Theme.of(context)
+                                                    .colorScheme
+                                                    .primary)
+                                            .withValues(alpha: 0.5),
+                                    BlendMode.srcIn)),
+                            //   Icon(
+                            //   Icons.speed,
+                            //   size: defaults.iconSize ?? 22,
+                            //   color: isAutoScrollActive
+                            //       ? (defaults.accentColor ??
+                            //           Theme.of(context).colorScheme.primary)
+                            //       : (defaults.iconColor ??
+                            //           Theme.of(context).colorScheme.primary),
+                            // ),
+                            onPressed: () {
+                              final ctrl = AutoScrollCtrl.instance;
+                              if (ctrl.state.isActive.value) {
+                                ctrl.stopAutoScroll();
+                              } else {
+                                final currentPage = QuranCtrl
+                                    .instance.state.currentPageNumber.value;
+                                ctrl.startAutoScroll(currentPage);
+                              }
+                            },
+                          )
+                        : const SizedBox.shrink();
+                  }),
+                if ((defaults.showFontsButton ?? true) && (!isSingleSurah!) ||
+                    (isPagesView!))
                   FontsDownloadDialog(
                     downloadFontsDialogStyle: downloadFontsDialogStyle ??
                         DownloadFontsDialogStyle.defaults(isDark, context),
@@ -91,6 +156,21 @@ class _QuranTopBar extends StatelessWidget {
             )
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDialog(BuildContext context, TajweedMenuStyle defaults) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: backgroundColor ??
+            defaults.backgroundColor ??
+            AppColors.getBackgroundColor(isDark),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(defaults.borderRadius ?? 12),
+        ),
+        child: TajweedMenuWidget(isDark: isDark, languageCode: languageCode),
       ),
     );
   }
@@ -126,6 +206,7 @@ class _QuranTopBar extends StatelessWidget {
         indexTabStyle: indexTabStyle,
         searchTabStyle: searchTabStyle,
         bookmarksTabStyle: bookmarksTabStyle,
+        isSingleSurah: isSingleSurah!,
       ),
     );
   }
@@ -140,6 +221,7 @@ class _MenuBottomSheet extends StatelessWidget {
   final IndexTabStyle indexTabStyle;
   final SearchTabStyle searchTabStyle;
   final BookmarksTabStyle bookmarksTabStyle;
+  final bool isSingleSurah;
 
   const _MenuBottomSheet({
     required this.isDark,
@@ -149,6 +231,7 @@ class _MenuBottomSheet extends StatelessWidget {
     required this.indexTabStyle,
     required this.searchTabStyle,
     required this.bookmarksTabStyle,
+    this.isSingleSurah = false,
   });
 
   @override
@@ -158,9 +241,10 @@ class _MenuBottomSheet extends StatelessWidget {
         style.accentColor ?? Theme.of(context).colorScheme.primary;
 
     return Directionality(
-      textDirection: languageCode =='ar'?  TextDirection.rtl : TextDirection.ltr,
+      textDirection:
+          languageCode == 'ar' ? TextDirection.rtl : TextDirection.ltr,
       child: DefaultTabController(
-        length: 3,
+        length: isSingleSurah ? 2 : 3,
         child: SafeArea(
           top: false,
           child: Container(
@@ -177,8 +261,8 @@ class _MenuBottomSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color:
-                        (style.handleColor ?? textColor.withValues(alpha: 0.25)),
+                    color: (style.handleColor ??
+                        textColor.withValues(alpha: 0.25)),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -190,11 +274,13 @@ class _MenuBottomSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TabBar(
+                    indicatorSize: TabBarIndicatorSize.tab,
                     indicator: BoxDecoration(
                       color: accentColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    indicatorPadding: const EdgeInsets.all(4),
+                    indicatorPadding:
+                        style.indicatorPadding ?? const EdgeInsets.all(4),
                     padding: EdgeInsets.zero,
                     labelColor: Colors.white,
                     unselectedLabelColor: textColor.withValues(alpha: 0.6),
@@ -205,7 +291,8 @@ class _MenuBottomSheet extends StatelessWidget {
                     unselectedLabelStyle:
                         QuranLibrary().cairoStyle.copyWith(fontSize: 15),
                     tabs: [
-                      Tab(text: style.tabIndexLabel ?? 'الفهرس'),
+                      if (!isSingleSurah)
+                        Tab(text: style.tabIndexLabel ?? 'الفهرس'),
                       Tab(text: style.tabSearchLabel ?? 'البحث'),
                       Tab(text: style.tabBookmarksLabel ?? 'الفواصل'),
                     ],
@@ -215,11 +302,12 @@ class _MenuBottomSheet extends StatelessWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _IndexTab(
-                        isDark: isDark,
-                        languageCode: languageCode,
-                        style: indexTabStyle,
-                      ),
+                      if (!isSingleSurah)
+                        _IndexTab(
+                          isDark: isDark,
+                          languageCode: languageCode,
+                          style: indexTabStyle,
+                        ),
                       _SearchTab(
                         isDark: isDark,
                         languageCode: languageCode,

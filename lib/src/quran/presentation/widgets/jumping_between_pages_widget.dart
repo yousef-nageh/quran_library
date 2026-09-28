@@ -32,11 +32,14 @@ class JumpingPageControllerWidget extends StatelessWidget {
               iconColor: textColor ?? AppColors.getTextColor(isDark),
               iconData: Icons.arrow_back_ios_new,
               onPressed: () {
-                log('Current Page: ${quranCtrl.state.currentPageNumber.value}');
-                quranCtrl.animateToPage(
-                    quranCtrl.state.currentPageNumber.value -= 2);
-                if (quranCtrl.state.currentPageNumber.value < 1) {
-                  quranCtrl.state.currentPageNumber.value = 1;
+                final controller = quranCtrl.quranPagesController;
+                if (!controller.hasClients) return;
+                final currentIndex = controller.page?.round() ?? 0;
+                // وضع الصفحتين (viewportFraction < 1): نقفز بمقدار 2
+                final step = controller.viewportFraction < 1.0 ? 2 : 1;
+                final target = currentIndex - step;
+                if (target >= 0) {
+                  quranCtrl.animateToPage(target);
                 }
               },
             ),
@@ -48,9 +51,15 @@ class JumpingPageControllerWidget extends StatelessWidget {
               iconColor: textColor ?? AppColors.getTextColor(isDark),
               iconData: Icons.arrow_forward_ios_outlined,
               onPressed: () {
-                log('Current Page: ${quranCtrl.state.currentPageNumber.value}');
-                quranCtrl
-                    .animateToPage(quranCtrl.state.currentPageNumber.value);
+                final controller = quranCtrl.quranPagesController;
+                if (!controller.hasClients) return;
+                final currentIndex = controller.page?.round() ?? 0;
+                // وضع الصفحتين (viewportFraction < 1): نقفز بمقدار 2
+                final step = controller.viewportFraction < 1.0 ? 2 : 1;
+                final target = currentIndex + step;
+                if (target <= 603) {
+                  quranCtrl.animateToPage(target);
+                }
               },
             ),
           ],

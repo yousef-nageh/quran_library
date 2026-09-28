@@ -2,7 +2,7 @@ part of '/quran.dart';
 
 class QuranState {
   /// -------- [Variables] ----------
-  List<SurahModel> surahs = [];
+  // List<SurahModel> surahs = [];
   List<List<AyahModel>> pages = [];
   List<AyahModel> allAyahs = [];
 
@@ -20,30 +20,25 @@ class QuranState {
   double surahItemHeight = 90.0;
 
   bool isQuranLoaded = false;
-  RxBool isDownloadingFonts = false.obs;
-  RxBool isFontDownloaded = false.obs;
+  RxBool isFontDownloaded = true.obs;
   RxList<int> fontsDownloadedList = <int>[].obs;
   RxInt fontsSelected = 0.obs;
-  RxDouble fontsDownloadProgress = 0.0.obs;
-  RxBool isPreparingDownload = false.obs;
-  OverlayEntry? overlayEntry;
 
-  // صفحات الخطوط التي تم تحميلها لتجنب إعادة التحميل
-  // Loaded fonts pages cache to avoid reloading
-  final Set<int> loadedFontPages = <int>{};
-  List<int> get getLoadedFontPages => loadedFontPages.toList();
+  /// هل خطوط التجويد المضغوطة جاهزة للعرض؟
+  RxBool fontsReady = false.obs;
 
-  // حارس لتحضير الخط للصفحة الأولى مرة واحدة
-  // Guard to prepare initial page fonts once
-  bool didPrepareInitialFonts = false;
+  /// نسبة تقدّم تحميل خطوط التجويد (0.0–1.0).
+  RxDouble fontsLoadProgress = 0.0.obs;
+
+  RxBool isShowMenu = false.obs;
 
   final FocusNode quranPageRLFocusNode = FocusNode();
-  // متغير لتتبع رقم الجيل الحالي لطلبات التحميل المسبق
-  int _fontPreloadGeneration = 0;
-  // متغير لتجميع تحديثات الواجهة
-  bool _needsUpdate = false;
-  // المؤقت الخاص بالـ Debouncing
-  Timer? _debounceTimer;
+
+  RxBool isTajweedEnabled = false.obs;
+
+  /// وضع العرض الحالي (افتراضي، صفحة قابلة للتمرير، صفحتان، مصحف+تفسير، آية+تفسير)
+  /// Current display mode
+  Rx<QuranDisplayMode> displayMode = QuranDisplayMode.defaultMode.obs;
 
   // ملاحظة: تم إزالة GlobalKey<ScaffoldState> لتجنب التعارض مع التطبيقات الأخرى
   // Note: GlobalKey<ScaffoldState> has been removed to avoid conflicts with other applications
@@ -55,20 +50,12 @@ class QuranState {
     scaleFactor.close();
     baseScaleFactor.close();
     isScaling.close();
-    isDownloadingFonts.close();
     isFontDownloaded.close();
     fontsDownloadedList.close();
     fontsSelected.close();
-    fontsDownloadProgress.close();
-    isPreparingDownload.close();
-    // تنظيف آمن للـ OverlayEntry
-    try {
-      overlayEntry?.remove();
-      overlayEntry = null;
-    } catch (e) {
-      // تجاهل الأخطاء إذا كان الـ Overlay قد تم التخلص منه بالفعل
-    }
+    fontsReady.close();
+    fontsLoadProgress.close();
+    displayMode.close();
     quranPageRLFocusNode.dispose();
-    _debounceTimer?.cancel();
   }
 }

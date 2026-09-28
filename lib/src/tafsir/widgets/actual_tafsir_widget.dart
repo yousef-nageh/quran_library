@@ -13,7 +13,6 @@ class ActualTafsirWidget extends StatelessWidget {
     required this.translationList,
     required this.fontSizeArabic,
     required this.language,
-    required this.surahs,
     this.pageIndex,
   });
 
@@ -27,7 +26,6 @@ class ActualTafsirWidget extends StatelessWidget {
   final List<TranslationModel> translationList;
   final double fontSizeArabic;
   final String language;
-  final SurahModel surahs;
   final int? pageIndex;
 
   @override
@@ -39,7 +37,7 @@ class ActualTafsirWidget extends StatelessWidget {
     return Column(
       children: [
         GetSingleAyah(
-          surahNumber: surahs.surahNumber,
+          surahNumber: ayahs.surahNumber!,
           ayahNumber: ayahs.ayahNumber,
           fontSize: 24,
           isBold: false,
@@ -48,7 +46,8 @@ class ActualTafsirWidget extends StatelessWidget {
           isDark: isDark,
           pageIndex: pageIndex! + 1,
           textColor: s.textColor,
-          useDefaultFont: true,
+          textAlign: TextAlign.center,
+          enabledTajweed: QuranCtrl.instance.state.isTajweedEnabled.value,
         ),
         Text.rich(
           TextSpan(

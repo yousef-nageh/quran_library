@@ -55,8 +55,8 @@ class QuranRepository {
   /// ```
   Future<List<dynamic>> getQuranDataV3() async {
     try {
-      // Load Quran V3 data from QuranDownloader
-      final dynamic jsonData = await QuranDownloader.loadJson('quranV3.json');
+      // Load Quran V4 data from QuranDownloader
+      final dynamic jsonData = await QuranDownloader.loadJson('quranV4.json');
 
       // Check if it's a List
       if (jsonData is List && jsonData.isNotEmpty && jsonData[0] is Map) {
@@ -81,7 +81,7 @@ class QuranRepository {
       // Fallback
       return [];
     } catch (e) {
-      log("Error loading Quran data V3: $e");
+      log("Error loading Quran data V4: $e");
       return [];
     }
   }

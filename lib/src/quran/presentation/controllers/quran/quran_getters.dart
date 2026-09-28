@@ -5,10 +5,82 @@ part of '/quran.dart';
 extension QuranGetters on QuranCtrl {
   /// -------- [Getter] ----------
 
-  RxBool get isDownloadedFonts =>
-      QuranCtrl.instance.state.fontsSelected.value == 1 ? true.obs : false.obs;
+  /// Get current recitation based on fontsSelected value
+  QuranRecitation get currentRecitation =>
+      QuranRecitation.fromIndex(state.fontsSelected.value);
 
-  bool get isPreparingDownloadFonts => state.isPreparingDownload.value;
+  /// Get current font family for the selected recitation
+  String get currentFontFamily => currentRecitation.fontFamily;
+
+  // شرح: تحسين PageController للحصول على أداء أفضل
+  // Explanation: Optimized PageController for better performance
+  PreloadPageController get quranPagesController {
+    // إذا لم يكن الـ controller مُهيأً بعد، أنشئه
+    // لا تتحقق من hasClients هنا لأن ذلك يسبب إعادة إنشاء الـ controller
+    // قبل أن يتم ربطه بالـ PageView
+    QuranCtrl.instance._pageController ??= PreloadPageController(
+      initialPage: (_quranRepository.getLastPage() ?? 1) - 1,
+      keepPage: true,
+      viewportFraction: 1.0,
+    );
+    return QuranCtrl.instance._pageController!;
+  }
+
+  set quranPagesController(PreloadPageController controller) {
+    // حفظ الـ controller الجديد
+    // إذا كان هناك controller قديم، قم بالتخلص منه أولاً
+    if (QuranCtrl.instance._pageController != null &&
+        QuranCtrl.instance._pageController!.hasClients) {
+      try {
+        QuranCtrl.instance._pageController!.dispose();
+      } catch (_) {
+        // تجاهل الأخطاء إذا كان قد تم التخلص منه مسبقاً
+      }
+    }
+    QuranCtrl.instance._pageController = controller;
+  }
+
+  RxBool get isDownloadedFonts => state.fontsReady;
+
+  bool get isPreparingDownloadFonts =>
+      state.fontsSelected.value == 0 && !state.fontsReady.value;
+
+  /// اختيار قراءة/خط المصحف باستخدام [QuranRecitation] كمصدر الحقيقة.
+  ///
+  /// خطوط التجويد تُحمّل ديناميكيًا عبر [QuranFontsService] عند الاختيار.
+  Future<void> selectRecitation(
+    QuranRecitation recitation, {
+    bool isFontsLocal = false,
+  }) async {
+    final int idx = recitation.recitationIndex;
+
+    if (state.fontsSelected.value == idx) {
+      return;
+    }
+
+    state.fontsSelected.value = idx;
+    GetStorage().write(_StorageConstants().fontsSelected, idx);
+
+    Get.forceAppUpdate();
+
+    if (idx == 0 && !QuranFontsService.allLoaded) {
+      // خطوط التجويد: تحميل كسول — الصفحات القريبة أولاً ثم البقية في الخلفية
+      final currentPage = lastPage.clamp(1, 604);
+      QuranFontsService.ensurePagesLoaded(currentPage, radius: 10).then((_) {
+        // update();
+        // update(['_pageViewBuild']);
+        // تحميل بقية الصفحات في الخلفية
+        QuranFontsService.loadRemainingInBackground(
+          startNearPage: currentPage,
+          progress: state.fontsLoadProgress,
+          ready: state.fontsReady,
+        ).then((_) {
+          // update();
+          update(['_pageViewBuild']);
+        });
+      });
+    }
+  }
 
   /// تبديل نوع الخط وتحميله إذا لم يكن محملاً من قبل
   ///
@@ -20,102 +92,13 @@ extension QuranGetters on QuranCtrl {
         GetStorage().read<bool>(_StorageConstants().isDownloadedCodeV4Fonts);
     state.isFontDownloaded.value = storageValue ?? false;
 
-    // التحقق مما إذا كان الخط المطلوب هو نفس الخط الحالي
-    // Check if the requested font is the same as the current font
-    if (state.fontsSelected.value == fontIndex &&
-        (fontIndex == 0 || state.isFontDownloaded.value)) {
-      log('Font is already selected', name: 'QuranGetters');
-      return;
-    }
-
-    // إذا كان الخط هو الخط الافتراضي (0)، فقط قم بتعيينه
-    // If the font is the default font (0), just set it
-    if (fontIndex == 0) {
-      state.fontsSelected.value = fontIndex;
-      GetStorage().write(_StorageConstants().fontsSelected, fontIndex);
-      Get.forceAppUpdate();
-      log('Default font selected', name: 'QuranGetters');
-      return;
-    }
-
-    // إذا كان الخط محملاً بالفعل، قم بتعيينه
-    // If the font is already downloaded, just set it
-    if (state.isFontDownloaded.value) {
-      state.fontsSelected.value = fontIndex;
-      GetStorage().write(_StorageConstants().fontsSelected, fontIndex);
-      update(['fontsSelected']);
-      Get.forceAppUpdate();
-      log('Downloaded font selected', name: 'QuranGetters');
-      return;
-    }
-
-    // إذا كان الخط غير محمل، قم بتحميله أولاً ثم تعيينه
-    // If the font is not downloaded, download it first then set it
-
-    state.fontsSelected.value = fontIndex;
-    GetStorage().write(_StorageConstants().fontsSelected, fontIndex);
-    update(['fontsSelected', 'fontsDownloadingProgress']);
-    Get.forceAppUpdate();
-    log('Font downloaded and selected', name: 'QuranGetters');
+    await selectRecitation(QuranRecitation.fromIndex(fontIndex));
   }
 
-  List<int> get _startSurahsNumbers => [
-        1,
-        2,
-        3,
-        4,
-        6,
-        7,
-        8,
-        9,
-        10,
-        13,
-        15,
-        17,
-        19,
-        21,
-        22,
-        23,
-        24,
-        26,
-        27,
-        31,
-        32,
-        33,
-        34,
-        37,
-        38,
-        41,
-        42,
-        44,
-        45,
-        47,
-        48,
-        50,
-        53,
-        58,
-        60,
-        62,
-        64,
-        65,
-        66,
-        67,
-        72,
-        73,
-        78,
-        80,
-        82,
-        86,
-        103,
-        106,
-        109,
-        112,
-      ];
-
-  List<int> get _topOfThePageIndex => [
-        435,
-        583,
-      ];
+  // List<int> get _topOfThePageIndex => [
+  //       435,
+  //       583,
+  //     ];
 
   /// Returns a list of lists of AyahModel, where each sublist contains Ayahs
   /// that are separated by a Basmalah, for the given page index.
@@ -131,6 +114,14 @@ extension QuranGetters on QuranCtrl {
       state.pages[pageIndex]
           .splitBetween((f, s) => f.ayahNumber > s.ayahNumber)
           .toList();
+  List<List<LineModel>> getCurrentPageAyahsSeparatedForBasmalahQcfV1AsLines(
+      int pageIndex) {
+    final allLines = staticPages[pageIndex].lines.splitBetween((f, s) {
+      return f.ayahs.first.ayahNumber > s.ayahs.first.ayahNumber;
+    }).toList();
+    log('All lines length: ${allLines.length}');
+    return allLines;
+  }
 
   /// Retrieves a list of AyahModel for a specific page index.
   ///
@@ -181,9 +172,11 @@ extension QuranGetters on QuranCtrl {
     if (surahNumber > 114) return 114;
 
     try {
-      final ayah = state.surahs[surahNumber - 1].ayahs.firstWhere(
-        (p) => p.ayahNumber == ayahNumber,
-      );
+      final ayah = surahs[surahNumber - 1].ayahs.firstWhere(
+            (p) => p.ayahNumber == ayahNumber,
+          );
+
+      log('Ayah found: Surah $surahNumber, Ayah $ayahNumber, Page ${ayah.page}');
 
       return ayah.page > 0 ? ayah.page : 1;
     } catch (e) {
@@ -193,7 +186,7 @@ extension QuranGetters on QuranCtrl {
 
   /// will return the surah number of the first ayahs..
   /// even if the page contains another surah.
-  int getSurahNumberFromPage(int pageNumber) => state.surahs
+  int getSurahNumberFromPage(int pageNumber) => surahs
       .firstWhere(
           (s) => s.ayahs.firstWhereOrNull((a) => a.page == pageNumber) != null)
       .surahNumber;
@@ -210,14 +203,14 @@ extension QuranGetters on QuranCtrl {
     List<AyahModel> pageAyahs = getPageAyahsByIndex(pageNumber - 1);
     List<SurahModel> surahsOnPage = [];
     for (AyahModel ayah in pageAyahs) {
-      SurahModel surah = state.surahs.firstWhere((s) => s.ayahs.contains(ayah),
+      SurahModel surah = surahs.firstWhere(
+          (s) => s.ayahs.any((a) => a.ayahUQNumber == ayah.ayahUQNumber),
           orElse: () => SurahModel(
                 surahNumber: 1,
                 arabicName: 'Unknown',
                 englishName: 'Unknown',
                 revelationType: 'Unknown',
                 ayahs: [],
-                isDownloadedFonts: false,
               ));
       if (!surahsOnPage.any((s) => s.surahNumber == surah.surahNumber) &&
           surah.surahNumber != -1) {
@@ -237,21 +230,28 @@ extension QuranGetters on QuranCtrl {
   ///
   /// Returns:
   ///   `SurahModel`: The SurahModel representing the Surah of the first Ayah on the specified page.
-  SurahModel getCurrentSurahByPageNumber(int pageNumber) =>
-      state.surahs.firstWhere(
-          (s) => s.ayahs.contains(getPageAyahsByIndex(pageNumber - 1).first));
+  SurahModel getCurrentSurahByPageNumber(int pageNumber) {
+    final firstAyah = getPageAyahsByIndex(pageNumber - 1).first;
+    return surahs.firstWhere(
+      (s) => s.ayahs.any((a) => a.ayahUQNumber == firstAyah.ayahUQNumber),
+      orElse: () => surahs.first,
+    );
+  }
 
   /// Retrieves the Surah data for a given Ayah.
   ///
   /// This method returns the SurahModel of the Surah that contains the given Ayah.
+  /// يستخدم [ayahUQNumber] للمقارنة بدلاً من المساواة المرجعية.
   ///
   /// Parameters:
   ///   ayah (AyahModel): The Ayah for which to retrieve the Surah data.
   ///
   /// Returns:
   ///   `SurahModel`: The SurahModel representing the Surah of the given Ayah.
-  SurahModel getSurahDataByAyah(AyahModel ayah) =>
-      state.surahs.firstWhere((s) => s.ayahs.contains(ayah));
+  SurahModel getSurahDataByAyah(AyahModel ayah) => surahs.firstWhere(
+        (s) => s.ayahs.any((a) => a.ayahUQNumber == ayah.ayahUQNumber),
+        orElse: () => surahs.first,
+      );
 
   /// Retrieves the Surah data for a given unique Ayah number.
   ///
@@ -266,14 +266,13 @@ extension QuranGetters on QuranCtrl {
   ///   `SurahModel`: The SurahModel representing the Surah containing
   ///   the Ayah with the given unique number.
   SurahModel getSurahDataByAyahUQ(int ayah) =>
-      state.surahs.firstWhere((s) => s.ayahs.any((a) => a.ayahUQNumber == ayah),
+      surahs.firstWhere((s) => s.ayahs.any((a) => a.ayahUQNumber == ayah),
           orElse: () => SurahModel(
                 surahNumber: 1,
                 arabicName: 'Unknown',
                 englishName: 'Unknown',
                 revelationType: 'Unknown',
                 ayahs: [],
-                isDownloadedFonts: false,
               ));
 
   /// Retrieves the Juz data for a given page number.
@@ -295,11 +294,25 @@ extension QuranGetters on QuranCtrl {
     );
   }
 
-  AyahModel getSingleAyahByAyahAndSurahNumber(int ayahNumber, int surahNumber) {
-    return state.surahs[surahNumber - 1].ayahs.firstWhere(
-      (ayah) => ayah.ayahNumber == ayahNumber,
+  AyahModel getJuzStartPage(int juzNumber) {
+    return state.allAyahs.firstWhere(
+      (a) => a.juz == juzNumber,
       orElse: () => AyahModel.empty(),
     );
+  }
+
+  AyahModel getHizbStartPage(int hizbNumber) {
+    return state.allAyahs.firstWhere(
+      (a) => a.hizb == hizbNumber,
+      orElse: () => AyahModel.empty(),
+    );
+  }
+
+  AyahModel getSingleAyahByAyahAndSurahNumber(int ayahNumber, int surahNumber) {
+    return surahs[surahNumber - 1].ayahs.firstWhere(
+          (ayah) => ayah.ayahNumber == ayahNumber,
+          orElse: () => AyahModel.empty(),
+        );
   }
 
   /// Retrieves the display string for the Hizb quarter of the given page number.
@@ -461,14 +474,98 @@ extension QuranGetters on QuranCtrl {
   ///
   /// Returns:
   ///   `bool`: true if the fonts are downloaded, false otherwise.
-  bool get isDownloadFonts => (state.fontsSelected.value == 1);
+  /// الخطوط المضغوطة تُحمّل عبر [QuranFontsService]
+  bool get isDownloadFonts =>
+      state.fontsSelected.value == 0 && !state.fontsReady.value;
 
   void showControlToggle({bool enableMultiSelect = false}) {
+    state.isShowMenu.value = false;
     if (!enableMultiSelect) {
-      clearSelection();
-      isShowControl.toggle();
-      update(['isShowControl']);
+      if (selectedAyahsByUnequeNumber.isNotEmpty) {
+        clearSelection();
+      } else {
+        clearSelection();
+        isShowControl.toggle();
+        update([
+          'isShowControl',
+          'selection_page_${state.currentPageNumber.value}'
+        ]);
+      }
     }
+  }
+
+  // -------- [Display Mode] ----------
+
+  /// الوضع الحالي للعرض
+  /// Current display mode
+  QuranDisplayMode get currentDisplayMode => state.displayMode.value;
+
+  /// تعيين وضع العرض مع الحفظ في التخزين المحلي
+  /// Set display mode and persist to local storage
+  void setDisplayMode(QuranDisplayMode mode) {
+    if (state.displayMode.value == mode) return;
+
+    // حفظ الصفحة الحالية قبل تغيير الوضع لمنع العودة للصفحة الأولى
+    // Save current page before mode switch to prevent jumping to page 1
+    int currentPage = state.currentPageNumber.value - 1;
+    if (quranPagesController.hasClients) {
+      final double? p = quranPagesController.page;
+      if (p != null) currentPage = p.round();
+    }
+    currentPage = currentPage.clamp(0, 603);
+
+    // تحديث رقم الصفحة وحفظه في التخزين لضمان عدم فقدانه عند إعادة إنشاء الـ controller
+    state.currentPageNumber.value = currentPage + 1;
+    saveLastPage(currentPage + 1);
+
+    // إعادة إنشاء الـ controller بالصفحة الحالية
+    final oldController = quranPagesController;
+    quranPagesController = PreloadPageController(
+      initialPage: currentPage,
+      keepPage: true,
+      viewportFraction: 1.0,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        if (oldController != quranPagesController) oldController.dispose();
+      } catch (_) {}
+    });
+
+    state.displayMode.value = mode;
+    GetStorage().write(_StorageConstants().displayMode, mode.storageIndex);
+    update(['display_mode', 'quran_display_content']);
+  }
+
+  /// تحميل آخر وضع عرض محفوظ من التخزين المحلي
+  /// Load saved display mode from local storage
+  void loadSavedDisplayMode() {
+    final saved = GetStorage().read<int>(_StorageConstants().displayMode);
+    if (saved != null) {
+      state.displayMode.value =
+          QuranDisplayModeExtension.fromStorageIndex(saved);
+    }
+  }
+
+  /// الأوضاع المتاحة حسب الاتجاه وحجم الشاشة
+  /// Available modes based on orientation and screen size
+  List<QuranDisplayMode> getAvailableModes(BuildContext context) {
+    return QuranDisplayModeExtension.availableModes(context);
+  }
+
+  List<TajweedRuleModel> getTajweedRulesListForLanguage({
+    required String languageCode,
+    String fallbackLanguageCode = 'ar',
+  }) {
+    final Map<String, dynamic> root = tajweedRules.first;
+    final List<dynamic> rules = (root['rules'] as List<dynamic>?) ?? const [];
+
+    return rules
+        .whereType<Map<String, dynamic>>()
+        .map((r) => TajweedRuleModel.fromJson(r).forLanguage(
+              languageCode,
+              fallbackLanguageCode: fallbackLanguageCode,
+            ))
+        .toList(growable: false);
   }
 }
 

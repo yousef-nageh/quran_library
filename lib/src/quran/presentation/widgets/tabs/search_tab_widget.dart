@@ -66,8 +66,7 @@ class _SearchTabState extends State<_SearchTab> {
               onTap: () {
                 final ctrl = QuranCtrl.instance;
                 // إزالة أي Overlay قد يعترض التركيز
-                ctrl.state.overlayEntry?.remove();
-                ctrl.state.overlayEntry = null;
+                ctrl.state.isShowMenu.value = false;
                 // تعطيل تركيز PageView مؤقتًا على الويب
                 if (kIsWeb) {
                   ctrl.state.quranPageRLFocusNode.canRequestFocus = false;
@@ -149,9 +148,6 @@ class _SearchTabState extends State<_SearchTab> {
                         onTap: () async {
                           Navigator.pop(context);
                           quranCtrl.searchResultSurahs.value = [];
-                          // if (quranCtrl.isDownloadFonts) {
-                          //   await quranCtrl.prepareFonts(search.startPage!);
-                          // }
                           QuranLibrary().jumpToSurah(search.surahNumber);
                           // إعادة تمكين تركيز PageView بعد إغلاق البحث على الويب
                           if (kIsWeb) {
@@ -204,14 +200,35 @@ class _SearchTabState extends State<_SearchTab> {
                   itemBuilder: (context, i) {
                     final ayah = quranCtrl.searchResultAyahs[i];
                     return ListTile(
-                      title: GetSingleAyah(
-                        surahNumber: ayah.surahNumber!,
-                        ayahNumber: ayah.ayahNumber,
-                        isBold: false,
-                        fontSize: 20,
-                        useDefaultFont: true,
-                        textColor: textColor,
-                        isDark: widget.isDark,
+                      onTap: () {
+                        Navigator.pop(context);
+                        quranCtrl.searchResultAyahs.value = [];
+                        // if (quranCtrl.isDownloadFonts) {
+                        //   await quranCtrl.prepareFonts(ayah.page);
+                        // }
+                        QuranLibrary().jumpToAyah(ayah.page, ayah.ayahUQNumber);
+                        // إعادة تمكين تركيز PageView بعد إغلاق البحث على الويب
+                        if (kIsWeb) {
+                          final rl =
+                              QuranCtrl.instance.state.quranPageRLFocusNode;
+                          rl.canRequestFocus = true;
+                          rl.requestFocus();
+                        }
+                      },
+                      title: IgnorePointer(
+                        ignoring: true,
+                        child: GetSingleAyah(
+                          surahNumber: ayah.surahNumber!,
+                          ayahNumber: ayah.ayahNumber,
+                          isBold: false,
+                          fontSize: 26,
+                          textColor: textColor,
+                          isDark: widget.isDark,
+                          pageIndex: ayah.page,
+                          enabledTajweed:
+                              quranCtrl.state.isTajweedEnabled.value,
+                          // ayahs: ayah,
+                        ),
                       ),
                       subtitle: Row(
                         children: [
@@ -232,21 +249,6 @@ class _SearchTabState extends State<_SearchTab> {
                       ),
                       contentPadding: s.listItemContentPadding ??
                           const EdgeInsets.symmetric(horizontal: 8),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        quranCtrl.searchResultAyahs.value = [];
-                        // if (quranCtrl.isDownloadFonts) {
-                        //   await quranCtrl.prepareFonts(ayah.page);
-                        // }
-                        QuranLibrary().jumpToAyah(ayah.page, ayah.ayahUQNumber);
-                        // إعادة تمكين تركيز PageView بعد إغلاق البحث على الويب
-                        if (kIsWeb) {
-                          final rl =
-                              QuranCtrl.instance.state.quranPageRLFocusNode;
-                          rl.canRequestFocus = true;
-                          rl.requestFocus();
-                        }
-                      },
                     );
                   },
                 ),
