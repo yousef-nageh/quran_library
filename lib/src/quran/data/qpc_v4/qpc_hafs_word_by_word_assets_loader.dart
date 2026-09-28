@@ -16,10 +16,12 @@ class QpcHafsWordByWordStore {
 }
 
 class QpcHafsWordByWordAssetsLoader {
+  static const _wbwGzPath =
+      'packages/quran_library/assets/jsons/qpc-hafs-word-by-word.json.gz';
+
   static Future<QpcHafsWordByWordStore> load() async {
-    // Downloaded on first use via QuranDownloader (not bundled in the package)
-    final decoded =
-        await QuranDownloader.loadJson('qpc-hafs-word-by-word.json');
+    const jsonService = GzipJsonAssetService();
+    final decoded = await jsonService.loadJsonDynamic(_wbwGzPath);
     if (decoded is! Map) {
       throw const FormatException(
           'qpc-hafs-word-by-word.json must be a JSON Map');

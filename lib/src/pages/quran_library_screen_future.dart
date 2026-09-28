@@ -70,15 +70,15 @@ class _QuranLibraryScreenFutureState extends State<QuranLibraryScreenFuture> {
   /// 1. Download and cache JSON files
   /// 2. Load Quran data in parallel
   Future<void> _initializeQuranData() async {
-    // Step 1: Download and cache all JSON files from CDN
-         await QuranLibrary.init();
+    // Clear cached JSON first if the data on the server changed
+    await QuranRemoteAssets.ensureDataVersion();
+    await QuranLibrary.init();
+
+    // Step 1: Download and cache the JSON files from CDN
     await QuranDownloader.ensureInitialized();
 
-      await  QuranLibrary.prepareQuranScreen();
-
-
     // Step 2: Load Quran data in parallel
-
+    await QuranLibrary.prepareQuranScreen();
   }
 
   @override

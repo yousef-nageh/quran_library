@@ -11,6 +11,12 @@ class QuranRepository {
   ///Quran pages number
   static const hafsPagesNumber = 604;
 
+  QuranRepository({GzipJsonAssetService? gzipJsonAssetService})
+      : _gzipJsonAssetService =
+            gzipJsonAssetService ?? const GzipJsonAssetService();
+
+  final GzipJsonAssetService _gzipJsonAssetService;
+
   /// Fetches the Quran data.
   ///
   /// This method retrieves a list of Quran data asynchronously.
@@ -20,8 +26,10 @@ class QuranRepository {
   ///
   /// Throws an [Exception] if the data retrieval fails.
   Future<List<dynamic>> getQuran() async {
-    final dynamic data = await QuranDownloader.loadJson('quran_hafs.json');
-    return data as List<dynamic>;
+    const gzPath = 'packages/quran_library/assets/jsons/quran_hafs.json.gz';
+    return _gzipJsonAssetService.loadJsonList(
+      gzPath,
+    );
   }
 
   /// Fetches the list of Surahs from the data source.
@@ -37,9 +45,10 @@ class QuranRepository {
   /// Throws:
   ///   An exception if there is an error while fetching the Surah data.
   Future<Map<String, dynamic>> getSurahs() async {
-    // Load surahs data from QuranDownloader
-    final dynamic data = await QuranDownloader.loadJson('surahs_name.json');
-    return data as Map<String, dynamic>;
+    const gzPath = 'packages/quran_library/assets/jsons/surahs_name.json.gz';
+    return _gzipJsonAssetService.loadJsonMap(
+      gzPath,
+    );
   }
 
   /// Fetches a list of Quran fonts.
@@ -51,39 +60,15 @@ class QuranRepository {
   ///
   /// Example usage:
   /// ```dart
-  /// List<dynamic> fonts = await getQuranDataV3();
+  /// List<dynamic> fonts = await getFontsQuran();
   /// ```
   Future<List<dynamic>> getQuranDataV3() async {
-    try {
-      // Load Quran V4 data from QuranDownloader
-      final dynamic jsonData = await QuranDownloader.loadJson('quranV4.json');
-
-      // Check if it's a List
-      if (jsonData is List && jsonData.isNotEmpty && jsonData[0] is Map) {
-        final firstItem = jsonData[0] as Map<String, dynamic>;
-        if (firstItem.containsKey('data')) {
-          final data = firstItem['data'] as Map<String, dynamic>;
-          return data['surahs'] as List<dynamic>;
-        }
-      }
-
-      // Check if it's a Map with data.surahs structure
-      if (jsonData is Map<String, dynamic> && jsonData.containsKey('data')) {
-        final data = jsonData['data'] as Map<String, dynamic>;
-        return data['surahs'] as List<dynamic>;
-      }
-
-      // If it's already a list, return as is
-      if (jsonData is List) {
-        return jsonData;
-      }
-
-      // Fallback
-      return [];
-    } catch (e) {
-      log("Error loading Quran data V4: $e");
-      return [];
-    }
+    const gzPath = 'packages/quran_library/assets/jsons/quranV4.json.gz';
+    final jsonResponse = await _gzipJsonAssetService.loadJsonMap(
+      gzPath,
+    );
+    List<dynamic> surahsJson = jsonResponse['data']['surahs'];
+    return surahsJson;
   }
 
   /// Saves the last page number.

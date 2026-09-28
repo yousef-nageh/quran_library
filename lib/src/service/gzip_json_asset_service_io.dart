@@ -3,7 +3,7 @@ import 'dart:io' show Directory, File;
 import 'dart:typed_data' show Uint8List;
 
 import 'package:archive/archive.dart' show GZipDecoder;
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:quran_library/src/services/quran_remote_assets.dart'; // fork: data from CDN
 import 'package:path_provider/path_provider.dart'
     show getApplicationDocumentsDirectory;
 
@@ -227,7 +227,7 @@ class GzipJsonAssetService {
   }
 
   Future<String> _loadAndDecodeTextFromAssets(String assetPath) async {
-    final data = await rootBundle.load(assetPath);
+    final data = await QuranRemoteAssets.load(assetPath); // fork: CDN
     final bytes =
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 

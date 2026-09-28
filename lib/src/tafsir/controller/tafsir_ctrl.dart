@@ -126,6 +126,8 @@ class TafsirCtrl extends GetxController {
 
   bool _isTafsirInitialized = false;
 
+  static const _gzipJsonService = GzipJsonAssetService();
+
   bool _looksLikeGzip(Uint8List bytes) {
     if (bytes.length < 2) return false;
     return bytes[0] == 0x1f && bytes[1] == 0x8b;
@@ -234,9 +236,9 @@ class TafsirCtrl extends GetxController {
       if (selectedTafsir.type == TafsirFileType.json) {
         String jsonString;
         if (selectedTafsir.fileName == _defaultDownloadedTafsirName) {
-          // Load saadi.json from QuranDownloader
-          final dynamic jsonData = await QuranDownloader.loadJson('saadi.json');
-          jsonString = json.encode(jsonData);
+          jsonString = await _gzipJsonService.loadText(
+            'packages/quran_library/assets/$_defaultDownloadedTafsirName.json.gz',
+          );
         } else {
           if (kIsWeb) {
             final url =
@@ -304,9 +306,10 @@ class TafsirCtrl extends GetxController {
 
       String jsonString;
       if (radioValue.value == translationsStartIndex) {
-        // Load en.json from QuranDownloader
-        final dynamic jsonData = await QuranDownloader.loadJson('en.json');
-        jsonString = json.encode(jsonData);
+        jsonString = await _gzipJsonService.loadText(
+          'packages/quran_library/assets/en.json.gz',
+          fallbackPlainAssetPath: 'packages/quran_library/assets/en.json',
+        );
       } else if (kIsWeb) {
         final url =
             '$_ghTafsirAndTranslate/$translationLangCode.json.gz';

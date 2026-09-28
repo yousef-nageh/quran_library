@@ -329,8 +329,14 @@ class QuranLibraryScreen extends StatelessWidget {
   /// [isShowDisplayModeBar] To specify whether to show the display mode bar or not
   final bool? isShowDisplayModeBar;
 
+  // fork: download/prepare the Quran data before showing the screen
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => QuranLibraryScreenFuture(
+      isDark: isDark,
+      backgroundColor: backgroundColor,
+      child: Builder(builder: _buildScreen));
+
+  Widget _buildScreen(BuildContext context) {
     // if (isDark!) {
     //   QuranCtrl.instance.state.isTajweed.value = 1;
     //   GetStorage().write(StorageConstants().isTajweed, 1);
@@ -342,111 +348,140 @@ class QuranLibraryScreen extends StatelessWidget {
       QuranCtrl.instance.state.currentPageNumber.value = pageIndex + 1;
     }
     WordInfoCtrl.instance.isWordSelectionEnabled = enableWordSelection;
-    return QuranLibraryScreenFuture(
-      isDark: isDark,
-      backgroundColor: backgroundColor,
-      child: PopScope(
-        onPopInvokedWithResult: (b, _) async {
-          QuranCtrl.instance.state.isShowMenu.value = false;
-        },
-        child: ScaleKitBuilder(
-          designWidth: 375,
-          designHeight: 812,
-          designType: DeviceType.mobile,
-          child: QuranLibraryTheme(
-              snackBarStyle: snackBarStyle ??
-                  SnackBarStyle.defaults(isDark: isDark, context: context),
-              ayahLongClickStyle: ayahMenuStyle ??
-                  AyahMenuStyle.defaults(isDark: isDark, context: context),
-              indexTabStyle: indexTabStyle ??
-                  IndexTabStyle.defaults(isDark: isDark, context: context),
-              topBarStyle: topBarStyle ??
-                  QuranTopBarStyle.defaults(isDark: isDark, context: context),
-              tajweedMenuStyle: tajweedMenuStyle ??
-                  TajweedMenuStyle.defaults(isDark: isDark, context: context),
-              searchTabStyle: searchTabStyle ??
-                  SearchTabStyle.defaults(isDark: isDark, context: context),
-              surahInfoStyle: surahInfoStyle ??
-                  SurahInfoStyle.defaults(isDark: isDark, context: context),
-              tafsirStyle: tafsirStyle ??
-                  TafsirStyle.defaults(isDark: isDark, context: context),
-              bookmarksTabStyle: bookmarksTabStyle ??
-                  BookmarksTabStyle.defaults(isDark: isDark, context: context),
-              topBottomQuranStyle: topBottomQuranStyle ??
-                  TopBottomQuranStyle.defaults(
-                      isDark: isDark, context: context),
-              displayModeBarStyle: displayModeBarStyle ??
-                  DisplayModeBarStyle.defaults(
-                      isDark: isDark, context: context),
-              ayahTafsirInlineStyle: ayahTafsirInlineStyle ??
-                  AyahTafsirInlineStyle.defaults(
-                      isDark: isDark, context: context),
-              quranTafsirSideStyle: quranTafsirSideStyle ??
-                  QuranTafsirSideStyle.defaults(
-                      isDark: isDark, context: context),
-              wordInfoBottomSheetStyle: wordInfoBottomSheetStyle ??
-                  WordInfoBottomSheetStyle.defaults(
-                      isDark: isDark, context: context),
-              autoScrollStyle: autoScrollStyle ??
-                  AutoScrollStyle.defaults(isDark: isDark, context: context),
-              child: GetBuilder<QuranCtrl>(
-                builder: (quranCtrl) {
-                  // تهيئة خاملة لخطوط الصفحات المجاورة حول الصفحة الحالية بعد أول إطار
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!context.mounted) return;
-                    // على الويب: لا تسرق التركيز من حقول الكتابة
-                    if (kIsWeb) {
-                      final pf = FocusManager.instance.primaryFocus;
-                      final isTextFieldFocused =
-                          pf?.context?.widget is EditableText;
-                      if (!isTextFieldFocused) {
-                        FocusScope.of(context)
-                            .requestFocus(quranCtrl.state.quranPageRLFocusNode);
-                      }
+    return PopScope(
+      onPopInvokedWithResult: (b, _) async {
+        QuranCtrl.instance.state.isShowMenu.value = false;
+      },
+      child: ScaleKitBuilder(
+        designWidth: 375,
+        designHeight: 812,
+        designType: DeviceType.mobile,
+        child: QuranLibraryTheme(
+            snackBarStyle: snackBarStyle ??
+                SnackBarStyle.defaults(isDark: isDark, context: context),
+            ayahLongClickStyle: ayahMenuStyle ??
+                AyahMenuStyle.defaults(isDark: isDark, context: context),
+            indexTabStyle: indexTabStyle ??
+                IndexTabStyle.defaults(isDark: isDark, context: context),
+            topBarStyle: topBarStyle ??
+                QuranTopBarStyle.defaults(isDark: isDark, context: context),
+            tajweedMenuStyle: tajweedMenuStyle ??
+                TajweedMenuStyle.defaults(isDark: isDark, context: context),
+            searchTabStyle: searchTabStyle ??
+                SearchTabStyle.defaults(isDark: isDark, context: context),
+            surahInfoStyle: surahInfoStyle ??
+                SurahInfoStyle.defaults(isDark: isDark, context: context),
+            tafsirStyle: tafsirStyle ??
+                TafsirStyle.defaults(isDark: isDark, context: context),
+            bookmarksTabStyle: bookmarksTabStyle ??
+                BookmarksTabStyle.defaults(isDark: isDark, context: context),
+            topBottomQuranStyle: topBottomQuranStyle ??
+                TopBottomQuranStyle.defaults(isDark: isDark, context: context),
+            displayModeBarStyle: displayModeBarStyle ??
+                DisplayModeBarStyle.defaults(isDark: isDark, context: context),
+            ayahTafsirInlineStyle: ayahTafsirInlineStyle ??
+                AyahTafsirInlineStyle.defaults(
+                    isDark: isDark, context: context),
+            quranTafsirSideStyle: quranTafsirSideStyle ??
+                QuranTafsirSideStyle.defaults(isDark: isDark, context: context),
+            wordInfoBottomSheetStyle: wordInfoBottomSheetStyle ??
+                WordInfoBottomSheetStyle.defaults(
+                    isDark: isDark, context: context),
+            autoScrollStyle: autoScrollStyle ??
+                AutoScrollStyle.defaults(isDark: isDark, context: context),
+            child: GetBuilder<QuranCtrl>(
+              builder: (quranCtrl) {
+                // تهيئة خاملة لخطوط الصفحات المجاورة حول الصفحة الحالية بعد أول إطار
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) return;
+                  // على الويب: لا تسرق التركيز من حقول الكتابة
+                  if (kIsWeb) {
+                    final pf = FocusManager.instance.primaryFocus;
+                    final isTextFieldFocused =
+                        pf?.context?.widget is EditableText;
+                    if (!isTextFieldFocused) {
+                      FocusScope.of(context)
+                          .requestFocus(quranCtrl.state.quranPageRLFocusNode);
                     }
+                  }
 
-                    // عند تعطيل PageView، لن يتم استدعاء onPageChanged، وبالتالي لن يتم
-                    // تحضير الخطوط/بيانات QPC v4 تلقائياً. نُطلق التحضير هنا مرة واحدة
-                    // بعد أول إطار لضمان عدم بقاء الصفحة على مؤشر التحميل.
-                    if (!withPageView) {
-                      Future(() async {
-                        await quranCtrl.prewarmQpcV4Pages(pageIndex);
-                      });
-                    }
-                  });
-                  return Scaffold(
-                    backgroundColor:
-                        backgroundColor ?? AppColors.getBackgroundColor(isDark),
-                    body: SafeArea(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: GestureDetector(
-                              onScaleStart: (details) => quranCtrl
-                                  .state
-                                  .baseScaleFactor
-                                  .value = quranCtrl.state.scaleFactor.value,
-                              onScaleUpdate: (ScaleUpdateDetails details) {
-                                // عند وجود إصبعين أو أكثر نعتبرها عملية تكبير/تصغير ونوقف سكرول الصفحات
-                                _onScaleUpdate(details, quranCtrl);
-                              },
-                              onScaleEnd: (_) {
-                                if (quranCtrl.state.isScaling.value) {
-                                  quranCtrl.state.isScaling.value = false;
-                                  quranCtrl.update();
-                                }
-                              },
-                              child: Obx(() {
-                                // تحقق من تفعيل السكرول التلقائي أولاً
-                                if (AutoScrollCtrl
-                                    .instance.state.isActive.value) {
-                                  return AutoScrollPageView(
+                  // عند تعطيل PageView، لن يتم استدعاء onPageChanged، وبالتالي لن يتم
+                  // تحضير الخطوط/بيانات QPC v4 تلقائياً. نُطلق التحضير هنا مرة واحدة
+                  // بعد أول إطار لضمان عدم بقاء الصفحة على مؤشر التحميل.
+                  if (!withPageView) {
+                    Future(() async {
+                      await quranCtrl.prewarmQpcV4Pages(pageIndex);
+                    });
+                  }
+                });
+                return Scaffold(
+                  backgroundColor:
+                      backgroundColor ?? AppColors.getBackgroundColor(isDark),
+                  body: SafeArea(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: GestureDetector(
+                            onScaleStart: (details) => quranCtrl
+                                .state
+                                .baseScaleFactor
+                                .value = quranCtrl.state.scaleFactor.value,
+                            onScaleUpdate: (ScaleUpdateDetails details) {
+                              // عند وجود إصبعين أو أكثر نعتبرها عملية تكبير/تصغير ونوقف سكرول الصفحات
+                              _onScaleUpdate(details, quranCtrl);
+                            },
+                            onScaleEnd: (_) {
+                              if (quranCtrl.state.isScaling.value) {
+                                quranCtrl.state.isScaling.value = false;
+                                quranCtrl.update();
+                              }
+                            },
+                            child: Obx(() {
+                              // تحقق من تفعيل السكرول التلقائي أولاً
+                              if (AutoScrollCtrl
+                                  .instance.state.isActive.value) {
+                                return AutoScrollPageView(
+                                  quranCtrl: quranCtrl,
+                                  autoScrollCtrl: AutoScrollCtrl.instance,
+                                  isDark: isDark,
+                                  languageCode: languageCode,
+                                  onPagePress: onPagePress,
+                                  circularProgressWidget:
+                                      circularProgressWidget,
+                                  bookmarkList: bookmarkList,
+                                  ayahSelectedFontColor: ayahSelectedFontColor,
+                                  textColor: textColor,
+                                  ayahIconColor: ayahIconColor,
+                                  showAyahBookmarkedIcon:
+                                      showAyahBookmarkedIcon,
+                                  onAyahLongPress: onAyahLongPress,
+                                  bookmarksColor: bookmarksColor,
+                                  customBookmarksColor: customBookmarksColor,
+                                  surahNameStyle: surahNameStyle,
+                                  bannerStyle: bannerStyle,
+                                  basmalaStyle: basmalaStyle,
+                                  onSurahBannerPress: onSurahBannerPress,
+                                  surahNumber: surahNumber,
+                                  ayahSelectedBackgroundColor:
+                                      ayahSelectedBackgroundColor,
+                                  fontsName: fontsName,
+                                  ayahBookmarked: ayahBookmarked,
+                                  isAyahBookmarked: isAyahBookmarked,
+                                  parentContext: parentContext,
+                                  isFontsLocal: isFontsLocal,
+                                );
+                              }
+                              final mode = quranCtrl.state.displayMode.value;
+                              switch (mode) {
+                                case QuranDisplayMode.singleScrollable:
+                                  return SingleScrollablePage(
                                     quranCtrl: quranCtrl,
-                                    autoScrollCtrl: AutoScrollCtrl.instance,
                                     isDark: isDark,
                                     languageCode: languageCode,
+                                    onPageChanged: (idx) =>
+                                        _onPageChange(context, idx, quranCtrl),
                                     onPagePress: onPagePress,
                                     circularProgressWidget:
                                         circularProgressWidget,
@@ -473,165 +508,124 @@ class QuranLibraryScreen extends StatelessWidget {
                                     parentContext: parentContext,
                                     isFontsLocal: isFontsLocal,
                                   );
-                                }
-                                final mode = quranCtrl.state.displayMode.value;
-                                switch (mode) {
-                                  case QuranDisplayMode.singleScrollable:
-                                    return SingleScrollablePage(
-                                      quranCtrl: quranCtrl,
-                                      isDark: isDark,
-                                      languageCode: languageCode,
-                                      onPageChanged: (idx) => _onPageChange(
-                                          context, idx, quranCtrl),
-                                      onPagePress: onPagePress,
-                                      circularProgressWidget:
-                                          circularProgressWidget,
-                                      bookmarkList: bookmarkList,
-                                      ayahSelectedFontColor:
-                                          ayahSelectedFontColor,
-                                      textColor: textColor,
-                                      ayahIconColor: ayahIconColor,
-                                      showAyahBookmarkedIcon:
-                                          showAyahBookmarkedIcon,
-                                      onAyahLongPress: onAyahLongPress,
-                                      bookmarksColor: bookmarksColor,
-                                      customBookmarksColor:
-                                          customBookmarksColor,
-                                      surahNameStyle: surahNameStyle,
-                                      bannerStyle: bannerStyle,
-                                      basmalaStyle: basmalaStyle,
-                                      onSurahBannerPress: onSurahBannerPress,
-                                      surahNumber: surahNumber,
-                                      ayahSelectedBackgroundColor:
-                                          ayahSelectedBackgroundColor,
-                                      fontsName: fontsName,
-                                      ayahBookmarked: ayahBookmarked,
-                                      isAyahBookmarked: isAyahBookmarked,
-                                      parentContext: parentContext,
-                                      isFontsLocal: isFontsLocal,
-                                    );
-                                  case QuranDisplayMode.dualPage:
-                                    return DualPageView(
-                                      quranCtrl: quranCtrl,
-                                      isDark: isDark,
-                                      languageCode: languageCode,
-                                      onPageChanged: (idx) => _onPageChange(
-                                          context, idx, quranCtrl),
-                                      onPagePress: onPagePress,
-                                      circularProgressWidget:
-                                          circularProgressWidget,
-                                      bookmarkList: bookmarkList,
-                                      ayahSelectedFontColor:
-                                          ayahSelectedFontColor,
-                                      textColor: textColor,
-                                      ayahIconColor: ayahIconColor,
-                                      showAyahBookmarkedIcon:
-                                          showAyahBookmarkedIcon,
-                                      onAyahLongPress: onAyahLongPress,
-                                      bookmarksColor: bookmarksColor,
-                                      customBookmarksColor:
-                                          customBookmarksColor,
-                                      surahNameStyle: surahNameStyle,
-                                      bannerStyle: bannerStyle,
-                                      basmalaStyle: basmalaStyle,
-                                      onSurahBannerPress: onSurahBannerPress,
-                                      surahNumber: surahNumber,
-                                      ayahSelectedBackgroundColor:
-                                          ayahSelectedBackgroundColor,
-                                      fontsName: fontsName,
-                                      ayahBookmarked: ayahBookmarked,
-                                      isAyahBookmarked: isAyahBookmarked,
-                                      parentContext: parentContext,
-                                      isFontsLocal: isFontsLocal,
-                                    );
-                                  case QuranDisplayMode.quranWithTafsirSide:
-                                    return QuranWithTafsirSide(
-                                      quranCtrl: quranCtrl,
-                                      isDark: isDark,
-                                      languageCode: languageCode,
-                                      onPageChanged: (idx) => _onPageChange(
-                                          context, idx, quranCtrl),
-                                      onPagePress: onPagePress,
-                                      circularProgressWidget:
-                                          circularProgressWidget,
-                                      bookmarkList: bookmarkList,
-                                      ayahSelectedFontColor:
-                                          ayahSelectedFontColor,
-                                      textColor: textColor,
-                                      ayahIconColor: ayahIconColor,
-                                      showAyahBookmarkedIcon:
-                                          showAyahBookmarkedIcon,
-                                      onAyahLongPress: onAyahLongPress,
-                                      bookmarksColor: bookmarksColor,
-                                      customBookmarksColor:
-                                          customBookmarksColor,
-                                      surahNameStyle: surahNameStyle,
-                                      bannerStyle: bannerStyle,
-                                      basmalaStyle: basmalaStyle,
-                                      onSurahBannerPress: onSurahBannerPress,
-                                      surahNumber: surahNumber,
-                                      ayahSelectedBackgroundColor:
-                                          ayahSelectedBackgroundColor,
-                                      fontsName: fontsName,
-                                      ayahBookmarked: ayahBookmarked,
-                                      isAyahBookmarked: isAyahBookmarked,
-                                      parentContext: parentContext,
-                                      isFontsLocal: isFontsLocal,
-                                    );
-                                  case QuranDisplayMode.ayahWithTafsirInline:
-                                    return AyahWithTafsirInline(
-                                      quranCtrl: quranCtrl,
-                                      isDark: isDark,
-                                      languageCode: languageCode,
-                                      onPageChanged: (idx) => _onPageChange(
-                                          context, idx, quranCtrl),
-                                      onPagePress: onPagePress,
-                                      parentContext: parentContext,
-                                      bannerStyle: bannerStyle,
-                                      surahNameStyle: surahNameStyle,
-                                      onSurahBannerPress: onSurahBannerPress,
-                                      basmalaStyle: basmalaStyle,
-                                      ayahBookmarked: ayahBookmarked,
-                                      isAyahBookmarked: isAyahBookmarked,
-                                      showAyahBookmarkedIcon:
-                                          showAyahBookmarkedIcon,
-                                      bookmarksColor: bookmarksColor,
-                                      customBookmarksColor:
-                                          customBookmarksColor,
-                                      style: ayahTafsirInlineStyle ??
-                                          AyahTafsirInlineStyle.defaults(
-                                            isDark: isDark,
-                                            context: context,
-                                          ),
-                                    );
-                                  case QuranDisplayMode.defaultMode:
-                                    return _buildDefaultPageView(
-                                        context, quranCtrl, languageCode);
-                                }
-                              }),
-                            ),
+                                case QuranDisplayMode.dualPage:
+                                  return DualPageView(
+                                    quranCtrl: quranCtrl,
+                                    isDark: isDark,
+                                    languageCode: languageCode,
+                                    onPageChanged: (idx) =>
+                                        _onPageChange(context, idx, quranCtrl),
+                                    onPagePress: onPagePress,
+                                    circularProgressWidget:
+                                        circularProgressWidget,
+                                    bookmarkList: bookmarkList,
+                                    ayahSelectedFontColor:
+                                        ayahSelectedFontColor,
+                                    textColor: textColor,
+                                    ayahIconColor: ayahIconColor,
+                                    showAyahBookmarkedIcon:
+                                        showAyahBookmarkedIcon,
+                                    onAyahLongPress: onAyahLongPress,
+                                    bookmarksColor: bookmarksColor,
+                                    customBookmarksColor: customBookmarksColor,
+                                    surahNameStyle: surahNameStyle,
+                                    bannerStyle: bannerStyle,
+                                    basmalaStyle: basmalaStyle,
+                                    onSurahBannerPress: onSurahBannerPress,
+                                    surahNumber: surahNumber,
+                                    ayahSelectedBackgroundColor:
+                                        ayahSelectedBackgroundColor,
+                                    fontsName: fontsName,
+                                    ayahBookmarked: ayahBookmarked,
+                                    isAyahBookmarked: isAyahBookmarked,
+                                    parentContext: parentContext,
+                                    isFontsLocal: isFontsLocal,
+                                  );
+                                case QuranDisplayMode.quranWithTafsirSide:
+                                  return QuranWithTafsirSide(
+                                    quranCtrl: quranCtrl,
+                                    isDark: isDark,
+                                    languageCode: languageCode,
+                                    onPageChanged: (idx) =>
+                                        _onPageChange(context, idx, quranCtrl),
+                                    onPagePress: onPagePress,
+                                    circularProgressWidget:
+                                        circularProgressWidget,
+                                    bookmarkList: bookmarkList,
+                                    ayahSelectedFontColor:
+                                        ayahSelectedFontColor,
+                                    textColor: textColor,
+                                    ayahIconColor: ayahIconColor,
+                                    showAyahBookmarkedIcon:
+                                        showAyahBookmarkedIcon,
+                                    onAyahLongPress: onAyahLongPress,
+                                    bookmarksColor: bookmarksColor,
+                                    customBookmarksColor: customBookmarksColor,
+                                    surahNameStyle: surahNameStyle,
+                                    bannerStyle: bannerStyle,
+                                    basmalaStyle: basmalaStyle,
+                                    onSurahBannerPress: onSurahBannerPress,
+                                    surahNumber: surahNumber,
+                                    ayahSelectedBackgroundColor:
+                                        ayahSelectedBackgroundColor,
+                                    fontsName: fontsName,
+                                    ayahBookmarked: ayahBookmarked,
+                                    isAyahBookmarked: isAyahBookmarked,
+                                    parentContext: parentContext,
+                                    isFontsLocal: isFontsLocal,
+                                  );
+                                case QuranDisplayMode.ayahWithTafsirInline:
+                                  return AyahWithTafsirInline(
+                                    quranCtrl: quranCtrl,
+                                    isDark: isDark,
+                                    languageCode: languageCode,
+                                    onPageChanged: (idx) =>
+                                        _onPageChange(context, idx, quranCtrl),
+                                    onPagePress: onPagePress,
+                                    parentContext: parentContext,
+                                    bannerStyle: bannerStyle,
+                                    surahNameStyle: surahNameStyle,
+                                    onSurahBannerPress: onSurahBannerPress,
+                                    basmalaStyle: basmalaStyle,
+                                    ayahBookmarked: ayahBookmarked,
+                                    isAyahBookmarked: isAyahBookmarked,
+                                    showAyahBookmarkedIcon:
+                                        showAyahBookmarkedIcon,
+                                    bookmarksColor: bookmarksColor,
+                                    customBookmarksColor: customBookmarksColor,
+                                    style: ayahTafsirInlineStyle ??
+                                        AyahTafsirInlineStyle.defaults(
+                                          isDark: isDark,
+                                          context: context,
+                                        ),
+                                  );
+                                case QuranDisplayMode.defaultMode:
+                                  return _buildDefaultPageView(
+                                      context, quranCtrl, languageCode);
+                              }
+                            }),
                           ),
-                          _ControlWidget(
-                            isDark: isDark,
-                            languageCode: languageCode,
-                            backgroundColor: backgroundColor,
-                            textColor: textColor,
-                            appBar: appBar,
-                            useDefaultAppBar: useDefaultAppBar,
-                            downloadFontsDialogStyle: downloadFontsDialogStyle,
-                            isFontsLocal: isFontsLocal,
-                            isShowTabBar: isShowTabBar,
-                            topBarStyle: topBarStyle,
-                            isShowDisplayModeBar: isShowDisplayModeBar,
-                            autoScrollStyle: autoScrollStyle,
-                          ),
-                        ],
-                      ),
+                        ),
+                        _ControlWidget(
+                          isDark: isDark,
+                          languageCode: languageCode,
+                          backgroundColor: backgroundColor,
+                          textColor: textColor,
+                          appBar: appBar,
+                          useDefaultAppBar: useDefaultAppBar,
+                          downloadFontsDialogStyle: downloadFontsDialogStyle,
+                          isFontsLocal: isFontsLocal,
+                          isShowTabBar: isShowTabBar,
+                          topBarStyle: topBarStyle,
+                          isShowDisplayModeBar: isShowDisplayModeBar,
+                          autoScrollStyle: autoScrollStyle,
+                        ),
+                      ],
                     ),
-                  );
-                },
-              )),
-        ),
+                  ),
+                );
+              },
+            )),
       ),
     );
   }
@@ -846,12 +840,12 @@ class _ControlWidget extends StatelessWidget {
                       ),
                     // شريط التحكم بسرعة السكرول التلقائي — يبقى ظاهرًا بشكل مستقل
                     AutoScrollSpeedSlider(
-                      isDark: isDark,
-                      autoScrollStyle: autoScrollStyle ??
-                          AutoScrollStyle.defaults(
-                              isDark: isDark, context: context),
-                      languageCode: languageCode,
-                    ),
+                        isDark: isDark,
+                        autoScrollStyle: autoScrollStyle ??
+                            AutoScrollStyle.defaults(
+                                isDark: isDark, context: context),
+                        languageCode: languageCode,
+                      ),
                   ],
                 ),
               ),

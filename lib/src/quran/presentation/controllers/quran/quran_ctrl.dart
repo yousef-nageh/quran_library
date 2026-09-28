@@ -184,24 +184,34 @@ class QuranCtrl extends GetxController {
   Future<void> loadQuranDataV3() async {
     lastPage = _quranRepository.getLastPage() ?? 1;
     state.currentPageNumber.value = lastPage;
-
+    if (lastPage != 0) {
+      jumpToPage(lastPage - 1);
+    }
     if (surahs.isEmpty) {
-      // Load JSON data from repository
       List<dynamic> surahsJson = await _quranRepository.getQuranDataV3();
+      surahs =
+          surahsJson.map((s) => SurahModel.fromDownloadedFontsJson(s)).toList();
 
-      // Process data in background using IsolateService
-      final result = await IsolateService.loadQuranV3InBackground(
-        surahsJson: surahsJson,
-        totalPages: 604,
-      );
+      // مزامنة القوائم على مستوى الـ instance مع state لتجنب القوائم الفارغة
+      // surahs.addAll(surahs);
 
-      // Update state with results from the isolate
-      surahs = result.surahs;
-      state.allAyahs.addAll(result.allAyahs);
+      for (final surah in surahs) {
+        // نقل بيانات السورة إلى كل آية حتى يعمل البحث بشكل صحيح
+        for (final ayah in surah.ayahs) {
+          ayah.surahNumber ??= surah.surahNumber;
+          ayah.arabicName ??= surah.arabicName;
+          ayah.englishName ??= surah.englishName;
+        }
+        state.allAyahs.addAll(surah.ayahs);
+      }
 
       // مزامنة قائمة الآيات على مستوى الـ instance
       ayahs.addAll(state.allAyahs);
-      state.pages.addAll(result.pages);
+      List.generate(604, (pageIndex) {
+        state.pages.add(state.allAyahs
+            .where((ayah) => ayah.page == pageIndex + 1)
+            .toList());
+      });
       state.isQuranLoaded = true;
       _buildAyahUqIndexIfNeeded();
 
@@ -210,11 +220,7 @@ class QuranCtrl extends GetxController {
         // لا ننتظر هنا لتجنب إبطاء init في الحالات الأخرى.
         Future(() => _ensureQpcV4AssetsLoaded());
       }
-    }
-
-    // Always jump to the last page, not just on first load
-    if (lastPage != 0) {
-      jumpToPage(lastPage - 1);
+      // log('Pages Length: ${state.pages.length}', name: 'Quran Controller');
     }
   }
 
@@ -462,26 +468,16 @@ class QuranCtrl extends GetxController {
   }
 
   Future<void> fetchSurahs() async {
-    if (surahsList.isNotEmpty) return;
     try {
       isLoading(true);
-
-      // Load JSON data from repository
       final jsonResponse = await _quranRepository.getSurahs();
-
-      // Process data in background using IsolateServiceFetchSurahs
-      final result = await IsolateService.fetchSurahsInBackground(
-        jsonResponse: jsonResponse,
-      );
-
-      // Update state with results from the isolate
-      surahsList.assignAll(result.surahs);
+      final response = SurahResponseModel.fromJson(jsonResponse);
+      surahsList.assignAll(response.surahs);
     } catch (e) {
       log('Error fetching data: $e');
     } finally {
       isLoading(false);
     }
-
     update();
   }
 

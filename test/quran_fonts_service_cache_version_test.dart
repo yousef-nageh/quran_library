@@ -1,9 +1,10 @@
-import 'dart:io' as io show Directory, File, gzip;
+import 'dart:io' as io show Directory, File;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:quran_library/quran.dart';
+import 'package:quran_library/src/services/quran_remote_assets.dart';
 
 class _FakePathProvider extends PathProviderPlatform {
   _FakePathProvider(this.docsPath);
@@ -22,14 +23,10 @@ void main() {
   setUp(() async {
     docs = await io.Directory.systemTemp.createTemp('quran_lib_fonts_docs_');
     PathProviderPlatform.instance = _FakePathProvider(docs.path);
-    // الخطوط تُنزَّل من الـ CDN؛ في الاختبار تُقرأ من ملفات المستودع.
-    QuranFontsService.debugFontBytesLoader = (page) async {
-      final padded = page.toString().padLeft(3, '0');
-      final gz = await io.File(
-              'assets/fonts/quran_fonts_qfc4/QCF4${padded}_COLOR-Regular.ttf.gz')
-          .readAsBytes();
-      return Uint8List.fromList(io.gzip.decode(gz));
-    };
+    // fork: fonts come from the CDN; read the repo's files instead.
+    QuranRemoteAssets.debugLoader = (path) async => ByteData.sublistView(
+        await io.File(path.replaceFirst('packages/quran_library/', ''))
+            .readAsBytes());
     // إعادة ضبط حالة الخدمة الثابتة بين الاختبارات.
     await QuranFontsService.clearCache();
   });

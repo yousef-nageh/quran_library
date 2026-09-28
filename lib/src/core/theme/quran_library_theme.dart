@@ -62,24 +62,29 @@ class QuranLibraryTheme extends StatelessWidget {
                       style: tajweedMenuStyle,
                       child: QuranTopBarTheme(
                         style: topBarStyle,
-                        child: _wrapIfNotNull(
-                          displayModeBarStyle,
-                          (s, c) => DisplayModeBarTheme(style: s, child: c),
-                          _wrapIfNotNull(
-                            ayahTafsirInlineStyle,
-                            (s, c) => AyahTafsirInlineTheme(style: s, child: c),
+                        child: KeyedSubtree(
+                          // fork: was AyahDownloadManagerTheme (audio removed)
+                          child: _wrapIfNotNull(
+                            displayModeBarStyle,
+                            (s, c) => DisplayModeBarTheme(style: s, child: c),
                             _wrapIfNotNull(
-                              quranTafsirSideStyle,
+                              ayahTafsirInlineStyle,
                               (s, c) =>
-                                  QuranTafsirSideTheme(style: s, child: c),
+                                  AyahTafsirInlineTheme(style: s, child: c),
                               _wrapIfNotNull(
-                                wordInfoBottomSheetStyle,
-                                (s, c) => WordInfoBottomSheetTheme(
-                                    style: s, child: c),
+                                quranTafsirSideStyle,
+                                (s, c) =>
+                                    QuranTafsirSideTheme(style: s, child: c),
                                 _wrapIfNotNull(
-                                  autoScrollStyle,
-                                  (s, c) => AutoScrollTheme(style: s, child: c),
-                                  child,
+                                  wordInfoBottomSheetStyle,
+                                  (s, c) => WordInfoBottomSheetTheme(
+                                      style: s, child: c),
+                                  _wrapIfNotNull(
+                                    autoScrollStyle,
+                                    (s, c) =>
+                                        AutoScrollTheme(style: s, child: c),
+                                    child, // fork: tasmee theme removed
+                                  ),
                                 ),
                               ),
                             ),
@@ -303,3 +308,4 @@ class QuranTafsirSideTheme extends InheritedWidget {
   bool updateShouldNotify(covariant QuranTafsirSideTheme oldWidget) =>
       style != oldWidget.style;
 }
+

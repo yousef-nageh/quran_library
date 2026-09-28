@@ -4,8 +4,10 @@ import 'dart:developer' show log;
 import 'dart:math' as math show max, min;
 import 'dart:ui';
 
+// import 'dart:ui';
+
 import 'package:arabic_justified_text/arabic_justified_text.dart';
-import 'package:archive/archive.dart' show ZipDecoder;
+import 'package:archive/archive.dart' show GZipDecoder, ZipDecoder;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -28,9 +30,11 @@ import 'src/core/widgets/download_button_widget.dart';
 import 'src/core/widgets/header_dialog_widget.dart';
 import 'src/quran/core/helpers/responsive.dart';
 import 'src/service/connectivity_service.dart';
+import 'src/service/gzip_json_asset_service.dart';
 import 'src/service/internet_connection_controller.dart';
 import 'src/services/isolate_service.dart';
 import 'src/services/quran_downloader.dart';
+import 'src/services/quran_remote_assets.dart';
 import 'src/tafsir/tafsir.dart';
 
 part 'src/core/theme/quran_library_theme.dart';
@@ -133,6 +137,7 @@ part 'src/quran/presentation/widgets/top_bottom_widget/top_and_bottom_widget.dar
 part 'src/quran/presentation/widgets/word_info/marked_content_span.dart';
 part 'src/quran/presentation/widgets/word_info/tap_long_press_recognizer.dart';
 part 'src/quran/presentation/widgets/word_info/word_info_bottom_sheet.dart';
+part 'src/services/quran_ctrl_fast_loading.dart';
 
 /// A comprehensive library for displaying the Holy Quran in Flutter applications.
 ///

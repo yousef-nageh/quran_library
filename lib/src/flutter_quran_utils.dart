@@ -148,8 +148,8 @@ class QuranLibrary {
 
     // Load Quran data (only runs first time, then cached in memory)
     final futures = <Future<void>>[
-      QuranCtrl.instance.loadQuranDataV3(),
-      QuranCtrl.instance.fetchSurahs(),
+      QuranCtrl.instance.loadQuranDataV3InBackground(),
+      QuranCtrl.instance.fetchSurahsInBackground(),
     ];
     await Future.wait<void>(futures);
   }

@@ -11,10 +11,16 @@ class QpcV4AssetsStore {
 }
 
 class QpcV4AssetsLoader {
+  static const _ayahInfoGzPath =
+      'packages/quran_library/assets/jsons/qpc_v4_ayah_info.json.gz';
+  static const _wordsGzPath =
+      'packages/quran_library/assets/jsons/qpc-v4.json.gz';
+
   static Future<QpcV4AssetsStore> load() async {
-    // Downloaded on first use via QuranDownloader (not bundled in the package)
-    final ayahInfoDecoded =
-        await QuranDownloader.loadJson('qpc_v4_ayah_info.json');
+    const jsonService = GzipJsonAssetService();
+    final ayahInfoDecoded = await jsonService.loadJsonDynamic(
+      _ayahInfoGzPath,
+    );
     if (ayahInfoDecoded is! List) {
       throw const FormatException('qpc_v4_ayah_info.json must be a JSON List');
     }
@@ -30,7 +36,9 @@ class QpcV4AssetsLoader {
       entry.value.sort((a, b) => a.lineNumber.compareTo(b.lineNumber));
     }
 
-    final wordsDecoded = await QuranDownloader.loadJson('qpc-v4.json');
+    final wordsDecoded = await jsonService.loadJsonDynamic(
+      _wordsGzPath,
+    );
     if (wordsDecoded is! Map) {
       throw const FormatException('qpc-v4.json must be a JSON Map');
     }

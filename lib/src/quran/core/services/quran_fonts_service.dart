@@ -102,11 +102,10 @@ class QuranFontsService {
     }
   }
 
-  /// رابط ملف الخط المضغوط للصفحة (1-based) على الـ CDN.
-  /// الخطوط غير مضمّنة في الحزمة لتقليل حجمها.
-  static String _fontUrl(int page) {
+  /// مسار الـ asset المضغوط للصفحة (1-based).
+  static String _assetPath(int page) {
     final padded = page.toString().padLeft(3, '0');
-    return '${QuranDownloader.cdnBaseUrl}/fonts/quran_fonts_qfc4/'
+    return 'packages/quran_library/assets/fonts/quran_fonts_qfc4/'
         'QCF4${padded}_COLOR-Regular.ttf.gz';
   }
 
@@ -327,20 +326,19 @@ class QuranFontsService {
       } catch (e, st) {
         log('QuranFontsService: failed to load font page $page: $e',
             name: 'QuranFontsService', stackTrace: st);
-        // السماح بإعادة المحاولة (مثلاً بعد عودة الاتصال بالإنترنت)
-        _pageLoadFutures.remove(page);
+        _pageLoadFutures.remove(page); // fork: allow retry (network)
       }
     });
   }
 
-  /// بديل لمصدر بايتات الخط (للاختبارات فقط، بدون شبكة).
-  @visibleForTesting
-  static Future<Uint8List> Function(int page)? debugFontBytesLoader;
-
-  /// تنزيل ملف `.ttf.gz` من الـ CDN وفك ضغطه.
-  static Future<Uint8List> _decompressFromAsset(int page) =>
-      debugFontBytesLoader?.call(page) ??
-      QuranDownloader.downloadGzipBytes(_fontUrl(page));
+  /// فك ضغط ملف `.ttf.gz` من الـ assets.
+  static Future<Uint8List> _decompressFromAsset(int page) async {
+    final data = await QuranRemoteAssets.load(_assetPath(page)); // fork: CDN
+    final gzBytes =
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    final decompressed = const GZipDecoder().decodeBytes(gzBytes);
+    return Uint8List.fromList(decompressed);
+  }
 
   // ---------------------------------------------------------------------------
   // تعديل جدول CPAL في ملف TTF/OTF
