@@ -19,7 +19,7 @@ import 'background_task.dart';
 abstract final class QuranRemoteAssets {
   /// Git branch or tag of this fork whose `assets/` folder is served.
   /// Set it back to `main` once this branch is merged.
-  static const cdnRef = 'upstream-merge-v2';
+  static const cdnRef = 'main';
 
   /// Base URL of the assets served from this fork's GitHub repo via jsDelivr.
   static const cdnBaseUrl =
