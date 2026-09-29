@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 
+import 'background_task.dart';
+
 /// Loads the package's data assets from this fork's CDN instead of the
 /// app bundle, so the JSON files and QCF4 fonts don't ship inside the package.
 ///
@@ -15,9 +17,13 @@ import 'package:path_provider/path_provider.dart';
 /// [load] instead of `rootBundle.load` (see FORK_CHANGES.md). The repo keeps
 /// the same `assets/` layout as upstream, so the CDN path equals the asset path.
 abstract final class QuranRemoteAssets {
+  /// Git branch or tag of this fork whose `assets/` folder is served.
+  /// Set it back to `main` once this branch is merged.
+  static const cdnRef = 'upstream-merge-v2';
+
   /// Base URL of the assets served from this fork's GitHub repo via jsDelivr.
   static const cdnBaseUrl =
-      'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@main/assets';
+      'https://cdn.jsdelivr.net/gh/yousef-nageh/quran_library@$cdnRef/assets';
 
   /// Bump this when the JSON files on the server change, so the decoded JSON
   /// cached on users' devices is cleared and downloaded again.
@@ -104,7 +110,8 @@ abstract final class QuranRemoteAssets {
 
     // A .gz must match its own trailer (CRC32 + size), which proves it is
     // complete. The decoders don't check this: a cut file decodes silently.
-    if (url.endsWith('.gz') && !isCompleteGzip(bytes)) {
+    if (url.endsWith('.gz') &&
+        !await runInBackground(() => isCompleteGzip(bytes))) {
       throw const IncompleteDownloadException('gzip data is cut or corrupt');
     }
     if ((url.endsWith('.ttf') || url.endsWith('.otf')) &&

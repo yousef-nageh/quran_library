@@ -20,6 +20,7 @@ import '../core/utils/app_colors.dart';
 import '../core/widgets/download_button_widget.dart';
 import '../core/widgets/header_dialog_widget.dart';
 import '../service/gzip_json_asset_service.dart';
+import '../services/background_task.dart'; // fork: off-UI-thread work
 
 part 'controller/tafsir_ctrl.dart';
 part 'controller/tafsir_ui.dart';

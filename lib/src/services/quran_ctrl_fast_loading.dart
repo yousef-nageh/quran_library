@@ -47,6 +47,20 @@ extension QuranCtrlFastLoading on QuranCtrl {
     }
   }
 
+  /// Prepares what the first visible page needs (the QPC v4 layout and the
+  /// page fonts around the current page), so the loading screen is the only
+  /// loader: without this, each page shows its own loader after it.
+  Future<void> prepareCurrentPageInBackground() async {
+    if (!isQpcV4Enabled) return;
+    final page = state.currentPageNumber.value.clamp(1, 604);
+    await Future.wait([
+      prewarmQpcV4Pages(page - 1),
+      QuranFontsService.ensurePagesLoaded(page, radius: 2),
+    ]);
+    // The rest of the nearby pages load while the user reads.
+    unawaited(QuranFontsService.ensurePagesLoaded(page, radius: 10));
+  }
+
   Future<void> fetchSurahsInBackground() async {
     if (surahsList.isNotEmpty) return;
     try {

@@ -91,7 +91,7 @@ abstract final class QuranDownloader {
     });
     await Future.wait(_kStartupFiles.map((name) async {
       try {
-        await _loadTextRepairing(_kAssets[name]!);
+        await _ensureDownloaded(_kAssets[name]!);
       } catch (e, s) {
         _log('❌ $name  –  $e');
         failed.add(name);
@@ -105,6 +105,16 @@ abstract final class QuranDownloader {
           Exception('Failed to download ${failed.join(', ')}: $firstError'),
           firstStack!);
     }
+  }
+
+  /// Downloads [assetPath] unless it is already in the disk cache. A cached
+  /// file is complete (it is saved only after a verified download, through a
+  /// temp file), so it isn't read or parsed here: that made every launch
+  /// slow. Caches from older versions are cleared by `dataVersion`.
+  static Future<void> _ensureDownloaded(String assetPath) async {
+    final path = await _jsonService.diskCachePathFor(assetPath);
+    if (path != null && File(path).existsSync()) return;
+    await _loadTextRepairing(assetPath);
   }
 
   /// Loads [assetPath] and checks it is complete JSON (parsed off the UI

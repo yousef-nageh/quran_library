@@ -133,9 +133,10 @@ class TafsirCtrl extends GetxController {
     return bytes[0] == 0x1f && bytes[1] == 0x8b;
   }
 
-  String _decodeBytesToText(Uint8List bytes) {
+  Future<String> _decodeBytesToText(Uint8List bytes) async {
     if (_looksLikeGzip(bytes)) {
-      return GzipJsonAssetService.decodeGzipBytesToString(bytes);
+      return runInBackground(() => // fork: off the UI thread
+          GzipJsonAssetService.decodeGzipBytesToString(bytes));
     }
     return utf8.decode(bytes);
   }

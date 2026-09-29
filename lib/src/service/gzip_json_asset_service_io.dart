@@ -4,6 +4,7 @@ import 'dart:typed_data' show Uint8List;
 
 import 'package:archive/archive.dart' show GZipDecoder;
 import 'package:quran_library/src/services/quran_remote_assets.dart'; // fork: data from CDN
+import 'package:quran_library/src/services/background_task.dart'; // fork: off-UI-thread work
 import 'package:path_provider/path_provider.dart'
     show getApplicationDocumentsDirectory;
 
@@ -73,7 +74,7 @@ class GzipJsonAssetService {
       fallbackPlainAssetPath: fallbackPlainAssetPath,
       cache: cache,
     );
-    return jsonDecode(text);
+    return runInBackground(() => jsonDecode(text)); // fork: off the UI thread
   }
 
   Future<List<dynamic>> loadJsonList(
@@ -235,7 +236,8 @@ class GzipJsonAssetService {
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
     if (assetPath.endsWith('.gz')) {
-      return decodeGzipBytesToString(bytes);
+      return runInBackground(
+          () => decodeGzipBytesToString(bytes)); // fork: off the UI thread
     }
 
     return utf8.decode(bytes);

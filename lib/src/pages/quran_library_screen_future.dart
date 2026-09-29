@@ -55,20 +55,22 @@ class QuranLibraryScreenFuture extends StatefulWidget {
 }
 
 class _QuranLibraryScreenFutureState extends State<QuranLibraryScreenFuture> {
+  /// True once the data is loaded in this app run: opening the screen again
+  /// shows it at once, without the loader.
+  static bool _dataReady = false;
+
   late Future<void> _initializationFuture;
 
   @override
   void initState() {
     super.initState();
-    // Initialize in sequence:
-    // 1. Download JSON files from CDN
-    // 2. Load Quran data in parallel
-    _initializationFuture = _initializeQuranData();
+    if (!_dataReady) _initializationFuture = _initializeQuranData();
   }
 
-  /// Initializes Quran data in two steps:
-  /// 1. Download and cache JSON files
+  /// Initializes Quran data in three steps:
+  /// 1. Download and cache JSON files (first launch only)
   /// 2. Load Quran data in parallel
+  /// 3. Prepare the current page, so no second loader shows after this one
   Future<void> _initializeQuranData() async {
     // Clear cached JSON first if the data on the server changed
     await QuranRemoteAssets.ensureDataVersion();
@@ -79,6 +81,11 @@ class _QuranLibraryScreenFutureState extends State<QuranLibraryScreenFuture> {
 
     // Step 2: Load Quran data in parallel
     await QuranLibrary.prepareQuranScreen();
+
+    // Step 3: Layout and fonts of the page that opens first
+    await QuranCtrl.instance.prepareCurrentPageInBackground();
+
+    _dataReady = true;
   }
 
   /// Tries again after a failure. Files that already downloaded are read
@@ -89,6 +96,7 @@ class _QuranLibraryScreenFutureState extends State<QuranLibraryScreenFuture> {
 
   @override
   Widget build(BuildContext context) {
+    if (_dataReady) return widget.child;
     return FutureBuilder<void>(
       future: _initializationFuture,
       builder: (context, snapshot) {

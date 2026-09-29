@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'background_task.dart';
 
 import '../../quran.dart';
 
@@ -38,7 +38,7 @@ class IsolateService {
     );
   }
 
-  /// Main method to load V3 Quran data using compute
+  /// Main method to load V3 Quran data on a background isolate
   static Future<QuranLoadResultV3> loadQuranV3InBackground({
     required List<dynamic> surahsJson,
     int totalPages = 604,
@@ -48,7 +48,7 @@ class IsolateService {
       totalPages: totalPages,
     );
 
-    return await compute(processQuranDataV3, params);
+    return runInBackground(() => processQuranDataV3(params));
   }
 
   /// for fetching surahs
@@ -57,12 +57,12 @@ class IsolateService {
     return FetchSurahsResult(surahs: response.surahs);
   }
 
-  /// Main method to fetch and process surahs using compute
+  /// Main method to fetch and process surahs on a background isolate
   static Future<FetchSurahsResult> fetchSurahsInBackground({
     required Map<String, dynamic> jsonResponse,
   }) async {
     final params = FetchSurahsParams(jsonResponse: jsonResponse);
-    return await compute(processSurahsJson, params);
+    return runInBackground(() => processSurahsJson(params));
   }
 }
 

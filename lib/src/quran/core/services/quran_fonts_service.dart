@@ -336,8 +336,8 @@ class QuranFontsService {
     final data = await QuranRemoteAssets.load(_assetPath(page)); // fork: CDN
     final gzBytes =
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    final decompressed = const GZipDecoder().decodeBytes(gzBytes);
-    return Uint8List.fromList(decompressed);
+    return runInBackground(() => // fork: off the UI thread
+        Uint8List.fromList(const GZipDecoder().decodeBytes(gzBytes)));
   }
 
   // ---------------------------------------------------------------------------

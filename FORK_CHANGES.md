@@ -30,7 +30,8 @@ are served from this repo's `main` branch. If a JSON file changed, bump
 | `lib/src/services/quran_remote_assets.dart` | Loads `packages/quran_library/assets/...` from the CDN (`cdnBaseUrl` + same path). Retries network errors (`retryDelays`) and only accepts complete files (Content-Length + gzip CRC32/size trailer check), so a cut download is never cached. `dataVersion` clears the JSON cache when the server data changes. |
 | `lib/src/services/quran_downloader.dart` | `ensureInitialized()` downloads the startup JSON files; each is checked to be valid JSON and a broken cached copy is deleted and downloaded again. Files that finished stay cached, so a retry only downloads the missing ones. `loadJson(name)` is also available. |
 | `lib/src/services/quran_static_fonts.dart` | The static fonts (kufi, naskh, hafs, cairo, bismillah, ayahNumber, surah-name-v4) are **not bundled**. They are downloaded once from the CDN (`assets/fonts/*.ttf`), cached, and registered with `FontLoader` under the same family names (with and without the `packages/quran_library/` prefix), so upstream's `fontFamily:` usages don't change. `QuranDownloader.ensureInitialized()` loads them. If upstream adds a font to `pubspec.yaml`, add it to `QuranStaticFonts.families`. |
-| `lib/src/services/isolate_service.dart` | Parses the Quran data on a background isolate. |
+| `lib/src/services/background_task.dart` | `runInBackground(task)`: runs heavy work (gzip, JSON parsing) with `Isolate.run` (directly on web). Use it instead of `compute`. |
+| `lib/src/services/isolate_service.dart` | Parses the Quran data on a background isolate (`runInBackground`). |
 | `lib/src/services/quran_ctrl_fast_loading.dart` | `loadQuranDataV3InBackground()` / `fetchSurahsInBackground()`. **Mirrors upstream's `QuranCtrl.loadQuranDataV3()`**: after a merge, copy any new steps from upstream into it (the script shows the upstream diff). |
 | `lib/src/pages/quran_library_screen_future.dart` | Loading screen: version check, `init`, download, and prepare. |
 | `tool/merge_upstream.sh`, `FORK_CHANGES.md` | This process. |
@@ -41,8 +42,8 @@ Each fork edit is marked with a `// fork:` comment where possible.
 
 | Upstream file | Fork edit | On conflict |
 |---|---|---|
-| `lib/src/service/gzip_json_asset_service_io.dart` | `rootBundle.load` → `QuranRemoteAssets.load` (+ its import); `_writeToDisk` writes a `.tmp` file then renames it (no half-written cache if the app is killed) | take upstream, re-apply these lines |
-| `lib/src/quran/core/services/quran_fonts_service.dart` | `rootBundle.load` → `QuranRemoteAssets.load` in `_decompressFromAsset`, and `_pageLoadFutures.remove(page)` in the catch of `_loadSinglePage` | take upstream, re-apply the 2 lines |
+| `lib/src/service/gzip_json_asset_service_io.dart` | `rootBundle.load` → `QuranRemoteAssets.load` (+ its import); `_writeToDisk` writes a `.tmp` file then renames it (no half-written cache if the app is killed); gzip decode and `jsonDecode` in `loadJsonDynamic` go through `runInBackground` | take upstream, re-apply these lines |
+| `lib/src/quran/core/services/quran_fonts_service.dart` | `rootBundle.load` → `QuranRemoteAssets.load` in `_decompressFromAsset`, and `_pageLoadFutures.remove(page)` in the catch of `_loadSinglePage`, gzip decode through `runInBackground` | take upstream, re-apply these lines |
 | `lib/src/pages/quran_library_screen.dart` | `build()` wraps in `QuranLibraryScreenFuture` and calls `_buildScreen` (upstream's `build` body, renamed). Audio slider, tasmee control, audio styles and params removed. | take upstream, rename `build`→`_buildScreen`, re-add the wrapper, delete audio/tasmee |
 | `lib/src/flutter_quran_utils.dart` | `init()` doesn't load the data. `prepareQuranScreen()` added (calls the fast loading). The audio/word-audio API is removed. | take upstream, move the data loading out of `init`, delete audio members |
 | `lib/src/quran/presentation/controllers/quran/quran_getters.dart` | Bounds-safe `getPageAyahsByIndex`, `orElse` in `getSurahDataByAyahUQ`, `&&` fix in `isThereAnySajdaInPage`, no audio in `showControlToggle` | keep the fork's lines |
@@ -58,6 +59,7 @@ Each fork edit is marked with a `// fork:` comment where possible.
 | `lib/quran.dart`, `lib/quran_library.dart` | No audio/tasmee imports, parts and exports. The fork's services are imported, and `quran_library_screen_future.dart` and `quran_ctrl_fast_loading.dart` are parts. `QuranDownloader` is exported. | take upstream's new parts, keep the fork's lines |
 | `pubspec.yaml` | No `audio_service`, `just_audio*`, `record`, `sherpa_onnx*`. No `fonts:` section and no `assets/fonts/` entries (see `QuranStaticFonts`). `assets:` bundles only svg/images (no `jsons`, `quran_lab`, or root `*.json.gz`). | automatic: the script takes upstream's file and strips these lines (also the `surahName` font family, whose font file the fork deleted) |
 | `android/src/main/AndroidManifest.xml`, `example/ios/Runner/Info.plist`, `example/macos/Runner/*.entitlements` | No audio service or microphone permissions | keep ours |
+| `lib/src/tafsir/controller/tafsir_ctrl.dart`, `tafsir/core/extensions/download_extension.dart`, `lib/src/tafsir/tafsir.dart` | gzip decode through `runInBackground` (`_decodeBytesToText` returns a `Future`), + its import | take upstream, re-apply |
 | `test/quran_fonts_service_cache_version_test.dart` | Sets `QuranRemoteAssets.debugLoader` to read the repo's font files | re-apply the 3 lines |
 
 ## Assets

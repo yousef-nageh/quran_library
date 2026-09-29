@@ -32,6 +32,7 @@ import 'src/quran/core/helpers/responsive.dart';
 import 'src/service/connectivity_service.dart';
 import 'src/service/gzip_json_asset_service.dart';
 import 'src/service/internet_connection_controller.dart';
+import 'src/services/background_task.dart'; // fork: off-UI-thread work
 import 'src/services/isolate_service.dart';
 import 'src/services/quran_downloader.dart';
 import 'src/services/quran_remote_assets.dart';

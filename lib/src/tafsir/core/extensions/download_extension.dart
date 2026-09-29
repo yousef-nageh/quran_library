@@ -76,9 +76,8 @@ extension DownloadExtension on TafsirCtrl {
         final isGzip =
             bytes.length >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b;
         if (isGzip || url.toLowerCase().endsWith('.gz')) {
-          final text = GzipJsonAssetService.decodeGzipBytesToString(
-            Uint8List.fromList(bytes),
-          );
+          final text = await runInBackground(() => // fork: off the UI thread
+              GzipJsonAssetService.decodeGzipBytesToString(bytes));
           await file.writeAsString(text, flush: true);
         }
       }
